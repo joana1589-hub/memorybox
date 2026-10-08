@@ -1,0 +1,24 @@
+rules_version = '2';
+// Copiar para: Firebase Console → Firestore Database → Regras → Publicar
+// Mete aqui os mesmos emails que estão em EMAILS_PERMITIDOS no index.html
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function autorizado() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in [
+             'joana1589@gmail.com',
+             'elineas_@hotmail.com'
+           ];
+    }
+    match /memorybox/v1 {
+      allow read, write: if autorizado();
+      match /{colecao}/{id} {
+        allow read, write: if autorizado();
+      }
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

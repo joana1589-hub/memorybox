@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MemoryBox</title>
+<meta name="theme-color" content="#2b1d33">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MemoryBox">
+<style>
+:root{
+  --bg:#f6f2ee; --card:#ffffff; --ink:#2b1d33; --muted:#7a6d80; --line:#e8e0e6;
+  --brand:#2b1d33; --accent:#e0607e; --accent-soft:#fbe3e9;
+  --ok:#2f8f6b; --ok-soft:#dff2ea; --warn:#b7791f; --warn-soft:#fbefd9; --bad:#c0392b;
+  --radius:16px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:16px}
+button,input,select,textarea{font:inherit;color:inherit}
+header{position:sticky;top:0;z-index:5;background:var(--brand);color:#fff;padding:calc(12px + env(safe-area-inset-top)) 16px 12px;display:flex;align-items:center;gap:10px}
+header h1{font-size:19px;margin:0;font-weight:700;letter-spacing:.2px;flex:1}
+header h1 span{color:var(--accent)}
+.sync{font-size:12px;opacity:.8;display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:#9aa}
+.dot.on{background:#5fd39f}.dot.off{background:#f0b44c}
+main{padding:16px 16px calc(96px + env(safe-area-inset-bottom));max-width:720px;margin:0 auto}
+.view{display:none}.view.active{display:block}
+h2{font-size:15px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:22px 4px 10px}
+h2:first-child{margin-top:4px}
+.card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:0 1px 2px rgba(43,29,51,.06);margin-bottom:12px}
+.hero{background:var(--brand);color:#fff}
+.hero .lbl{opacity:.75;font-size:13px}
+.hero .big{font-size:34px;font-weight:800;margin:4px 0 2px}
+.hero .sub{font-size:14px;opacity:.85}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--card);border-radius:14px;padding:12px 14px}
+.stat .lbl{font-size:12.5px;color:var(--muted)}
+.stat .val{font-size:20px;font-weight:700;margin-top:2px}
+.bar{height:10px;background:rgba(255,255,255,.18);border-radius:6px;overflow:hidden;margin:12px 0 6px}
+.bar>i{display:block;height:100%;background:var(--accent);border-radius:6px}
+.row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);gap:12px}
+.row:last-child{border-bottom:0}
+.row .k{color:var(--muted)}
+.row .v{font-weight:600;text-align:right}
+.item{background:var(--card);border-radius:14px;padding:13px 14px;margin-bottom:10px;cursor:pointer;display:block;width:100%;text-align:left;border:0}
+.item .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.item .t{font-weight:700}
+.item .m{font-size:13px;color:var(--muted);margin-top:3px}
+.item .amt{font-weight:800;white-space:nowrap}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.chip{font-size:12px;padding:3px 9px;border-radius:20px;background:var(--bg);color:var(--ink)}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}
+.chip.acc{background:var(--accent-soft);color:#a83a55}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.empty{text-align:center;color:var(--muted);padding:30px 10px}
+.btn{border:0;border-radius:12px;padding:12px 16px;font-weight:600;background:var(--line);cursor:pointer}
+.btn.pri{background:var(--accent);color:#fff}
+.btn.dark{background:var(--brand);color:#fff}
+.btn.del{background:transparent;color:var(--bad)}
+.btn.block{width:100%}
+.btn.sm{padding:7px 12px;font-size:14px}
+.fab{position:fixed;right:18px;bottom:calc(82px + env(safe-area-inset-bottom));width:58px;height:58px;border-radius:50%;border:0;background:var(--accent);color:#fff;font-size:30px;box-shadow:0 6px 18px rgba(224,96,126,.45);cursor:pointer;z-index:6;display:none}
+nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:7}
+nav button{flex:1;border:0;background:none;padding:9px 2px 10px;font-size:11.5px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
+nav button svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav button.active{color:var(--accent);font-weight:700}
+/* folha (formulário) */
+.sheet-bg{position:fixed;inset:0;background:rgba(20,10,25,.45);z-index:20;display:none}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-height:92vh;overflow:auto;background:var(--bg);border-radius:20px 20px 0 0;z-index:21;padding:8px 16px calc(18px + env(safe-area-inset-bottom));transform:translateY(105%);visibility:hidden;transition:transform .22s ease,visibility 0s .22s;max-width:720px;margin:0 auto}
+.sheet.open{transform:none;visibility:visible;transition:transform .22s ease}
+.grab{width:40px;height:5px;border-radius:3px;background:#cfc4cc;margin:4px auto 10px}
+.sheet h3{margin:4px 0 14px;font-size:19px}
+label{display:block;font-size:13px;color:var(--muted);margin:12px 0 5px}
+input,select,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:16px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-color:transparent}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.preview{background:var(--card);border-radius:14px;padding:6px 14px;margin-top:14px}
+.hint{font-size:12.5px;color:var(--muted);margin-top:5px}
+.actions{display:flex;gap:10px;margin-top:18px}
+.actions .btn{flex:1}
+.toast{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;z-index:40;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1}.toast.erro{background:var(--bad)}
+.edit-line{display:grid;grid-template-columns:1fr 92px 34px;gap:8px;align-items:center;margin-bottom:8px}
+.edit-line.rolo{grid-template-columns:1fr 84px 74px 34px}
+.edit-line input{padding:10px}
+.x{border:0;background:none;color:var(--bad);font-size:22px;cursor:pointer}
+.small-head{display:grid;gap:8px;font-size:12px;color:var(--muted);margin:0 0 4px}
+.login{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;background:var(--brand);color:#fff}
+.login h1{font-size:30px;margin:14px 0 6px}.login h1 span{color:var(--accent)}
+.login p{opacity:.8;margin:0 0 26px}
+.login img{width:96px;height:96px;border-radius:22px}
+.how{font-size:14px;color:var(--muted);line-height:1.5}
+.seg{display:flex;background:var(--line);border-radius:12px;padding:3px;margin-bottom:12px}
+.seg button{flex:1;border:0;background:none;padding:8px;border-radius:10px;font-weight:600;color:var(--muted);cursor:pointer}
+.seg button.on{background:#fff;color:var(--ink)}
+</style>
+</head>
+<body>
+
+<div id="ecraLogin" class="login" style="display:none">
+  <img src="icons/icon-192.png" alt="">
+  <h1>Memory<span>Box</span></h1>
+  <p>Controlo simples — saber se dá lucro</p>
+  <button class="btn pri" id="btnLogin" style="min-width:240px">Entrar com Google</button>
+</div>
+
+<div id="app" style="display:none">
+<header>
+  <h1>Memory<span>Box</span></h1>
+  <div class="sync"><i class="dot" id="syncDot"></i><span id="syncTxt"></span></div>
+</header>
+
+<main>
+  <!-- RESUMO -->
+  <section class="view active" id="v-resumo">
+    <div class="card hero">
+      <div class="lbl">Lucro dos serviços</div>
+      <div class="big" id="r-lucro">0 €</div>
+      <div class="sub" id="r-lucro-sub"></div>
+    </div>
+    <div class="grid">
+      <div class="stat"><div class="lbl">Total recebido</div><div class="val" id="r-recebido"></div></div>
+      <div class="stat"><div class="lbl">Total de fotos</div><div class="val" id="r-fotos"></div></div>
+      <div class="stat"><div class="lbl">Custo das fotos</div><div class="val" id="r-custo"></div></div>
+      <div class="stat"><div class="lbl">Margem</div><div class="val" id="r-margem"></div></div>
+    </div>
+
+    <h2>Investimento inicial</h2>
+    <div class="card hero">
+      <div class="lbl" id="r-inv-lbl"></div>
+      <div class="big" id="r-recuperado"></div>
+      <div class="bar"><i id="r-bar" style="width:0"></i></div>
+      <div class="sub" id="r-falta"></div>
+    </div>
+
+    <h2>Divisão 50 / 50</h2>
+    <div class="card" id="r-pessoas"></div>
+
+    <h2>Novas compras</h2>
+    <div class="card" id="r-compras"></div>
+  </section>
+
+  <!-- SERVIÇOS -->
+  <section class="view" id="v-servicos">
+    <h2>Serviços</h2>
+    <div id="listaServicos"></div>
+    <div class="card how">
+      <b>Como funciona:</b> Recebido = dinheiro que entrou. “Quero abater” = quanto queres usar para recuperar o investimento.
+      “Abate real” é limitado ao que ainda falta recuperar. “Fica para dividir” = Recebido − Abate real, dividido 50% / 50%.
+      O custo das fotos serve para calcular o lucro do serviço.
+    </div>
+  </section>
+
+  <!-- COMPRAS -->
+  <section class="view" id="v-compras">
+    <h2>Compras</h2>
+    <div id="listaCompras"></div>
+    <div class="card how">Novos rolos e outras despesas. Se pagarem a meias, coloca metade em cada uma (botão “A meias”).</div>
+  </section>
+
+  <!-- CONFIGURAÇÃO -->
+  <section class="view" id="v-config">
+    <h2>Rolos</h2>
+    <div class="card">
+      <div class="small-head" style="grid-template-columns:1fr 84px 74px 34px"><span>Nome</span><span>Preço (€)</span><span>Fotos/rolo</span><span></span></div>
+      <div id="cfgRolos"></div>
+      <button class="btn sm" id="addRolo">+ Adicionar rolo</button>
+    </div>
+
+    <h2>Investimento inicial</h2>
+    <div class="card">
+      <label style="margin-top:0">Pago por</label>
+      <select id="cfgInvPor"></select>
+      <div class="small-head" style="grid-template-columns:1fr 92px 34px;margin-top:12px"><span>Item</span><span>Valor (€)</span><span></span></div>
+      <div id="cfgInv"></div>
+      <button class="btn sm" id="addInv">+ Adicionar item</button>
+      <div class="row" style="margin-top:8px"><span class="k">Total</span><span class="v" id="cfgInvTotal"></span></div>
+    </div>
+
+    <h2>Sócias</h2>
+    <div class="card">
+      <div class="two">
+        <div><label style="margin-top:0">Pessoa 1</label><input id="cfgP1"></div>
+        <div><label style="margin-top:0">Pessoa 2</label><input id="cfgP2"></div>
+      </div>
+    </div>
+    <button class="btn dark block" id="guardarCfg">Guardar configuração</button>
+
+    <h2>Cópia de segurança</h2>
+    <div class="card">
+      <div class="two">
+        <button class="btn" id="btnExport">Exportar cópia</button>
+        <button class="btn" id="btnImport">Importar cópia</button>
+      </div>
+      <button class="btn block" id="btnCsv">Exportar serviços (Excel / CSV)</button>
+      <input type="file" id="fileImport" accept="application/json,.json" style="display:none">
+      <div class="hint" id="modoTxt"></div>
+      <button class="btn del block" id="btnSair" style="display:none;margin-top:6px">Terminar sessão</button>
+    </div>
+  </section>
+</main>
+
+<button class="fab" id="fab" aria-label="Adicionar">+</button>
+
+<nav>
+  <button data-v="resumo" class="active"><svg viewBox="0 0 24 24"><path d="M3 12l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Resumo</button>
+  <button data-v="servicos"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/></svg>Serviços</button>
+  <button data-v="compras"><svg viewBox="0 0 24 24"><path d="M5 7h14l-1.5 12h-11z"/><path d="M9 7a3 3 0 016 0"/></svg>Compras</button>
+  <button data-v="config"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>Configuração</button>
+</nav>
+</div>
+
+<div class="sheet-bg" id="sheetBg"></div>
+<div class="sheet" id="sheet"><div class="grab"></div><div id="sheetBody"></div></div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+// ═══════════════════════════════════════════════════════════════
+//  CONFIGURAÇÃO DA SINCRONIZAÇÃO (opcional)
+//  Sem isto preenchido, os dados ficam guardados só neste telemóvel.
+//  Para partilhar os dados entre as duas, cola aqui a config do Firebase
+//  (ver LEIA-ME.md) e os emails Google autorizados.
+// ═══════════════════════════════════════════════════════════════
+const FIREBASE_CONFIG = null;
+// Exemplo:
+// const FIREBASE_CONFIG = { apiKey:"...", authDomain:"memorybox-xxxx.firebaseapp.com", projectId:"memorybox-xxxx",
+//   storageBucket:"...", messagingSenderId:"...", appId:"..." };
+const EMAILS_PERMITIDOS = ['joana1589@gmail.com', 'elineas_@hotmail.com'];
+
+// ── Dados iniciais (copiados da folha MemoryBox_FINAL_CORRIGIDO_LOGICA) ──
+const DADOS_INICIAIS = {
+  config: {
+    pessoas: ['Joana', 'Eliana'],
+    investimentoPor: 0,
+    rolos: [
+      { id: 'r1', nome: 'Rolo 10x15', preco: 128, fotos: 1400 },
+      { id: 'r2', nome: 'Rolo 15x20', preco: 184.22, fotos: 1400 }
+    ],
+    investimento: [
+      { id: 'i1', nome: 'Impressora', valor: 699 },
+      { id: 'i2', nome: 'Rolo 10x15', valor: 128 },
+      { id: 'i3', nome: 'Rolo 15x20', valor: 184.22 },
+      { id: 'i4', nome: 'Outros', valor: 0 }
+    ]
+  },
+  servicos: [
+    { id: 's1', data: '2026-09-04', evento: 'Junta Casal Comba', recebido: 460, fotos: 750, roloId: 'r1', abater: 260, obs: '', criado: 1 }
+  ],
+  compras: []
+};
+
+// ── Estado ──
+let S = structuredClone(DADOS_INICIAIS);
+let modo = 'local';           // 'local' ou 'nuvem'
+let fb = null;                // funções do Firebase quando ligado
+const LS_KEY = 'memorybox-v1';
+
+// ── Utilitários ──
+const $ = id => document.getElementById(id);
+const eur = n => (Number(n) || 0).toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' });
+const eur4 = n => (Number(n) || 0).toLocaleString('pt-PT', { minimumFractionDigits: 4, maximumFractionDigits: 4 }) + ' €';
+const pct = n => ((Number(n) || 0) * 100).toLocaleString('pt-PT', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+const num = v => { const x = parseFloat(String(v ?? '').replace(/\s/g, '').replace(',', '.')); return isFinite(x) ? x : 0; };
+const r2 = n => Math.round((n + Number.EPSILON) * 100) / 100;
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const hoje = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
+const dataPT = iso => iso ? iso.split('-').reverse().join('/') : '—';
+function toast(msg, tipo) { const t = $('toast'); t.textContent = msg; t.className = 'toast show' + (tipo ? ' ' + tipo : ''); clearTimeout(t._h); t._h = setTimeout(() => t.className = 'toast', 2600); }
+
+// ── CÁLCULOS (mesma lógica da folha) ──
+function custoFoto(rolo) { return rolo && rolo.fotos > 0 ? rolo.preco / rolo.fotos : 0; }
+function calcular() {
+  const cfg = S.config;
+  const investimento = cfg.investimento.reduce((a, i) => a + num(i.valor), 0);
+  // Os abates são aplicados por ordem de data: cada serviço só abate o que ainda falta recuperar
+  const ordem = [...S.servicos].sort((a, b) => (a.data || '').localeCompare(b.data || '') || (a.criado || 0) - (b.criado || 0));
+  let falta = investimento;
+  const linhas = {};
+  const T = { recebido: 0, fotos: 0, custo: 0, lucro: 0, abate: 0, dividir: 0, p1: 0, p2: 0 };
+  for (const s of ordem) {
+    const rolo = cfg.rolos.find(r => r.id === s.roloId);
+    const cf = rolo ? custoFoto(rolo) : num(s.custoFotoGuardado);
+    const recebido = num(s.recebido), fotos = num(s.fotos);
+    const custo = fotos * cf;
+    const lucro = recebido - custo;
+    const margem = recebido ? lucro / recebido : 0;
+    const abateReal = Math.max(0, Math.min(num(s.abater), r2(falta), recebido));
+    falta = r2(falta - abateReal);
+    const dividir = recebido - abateReal;
+    const L = { rolo, cf, custo, lucro, margem, abateReal, dividir, p1: dividir / 2, p2: dividir / 2, faltaDepois: falta };
+    linhas[s.id] = L;
+    T.recebido += recebido; T.fotos += fotos; T.custo += custo; T.lucro += lucro;
+    T.abate += abateReal; T.dividir += dividir; T.p1 += L.p1; T.p2 += L.p2;
+  }
+  T.margem = T.recebido ? T.lucro / T.recebido : 0;
+  const compras = S.compras.reduce((a, c) => ({ total: a.total + num(c.total), p1: a.p1 + num(c.p1), p2: a.p2 + num(c.p2) }), { total: 0, p1: 0, p2: 0 });
+  return { investimento, recuperado: T.abate, falta: Math.max(0, r2(investimento - T.abate)), T, linhas, ordem, compras };
+}
+
+// ── DESENHAR ──
+function render() {
+  const C = calcular(), P = S.config.pessoas, invPor = P[S.config.investimentoPor] || P[0];
+  // Resumo
+  $('r-lucro').textContent = eur(C.T.lucro);
+  $('r-lucro-sub').textContent = `${S.servicos.length} serviço${S.servicos.length === 1 ? '' : 's'} · margem ${pct(C.T.margem)}`;
+  $('r-recebido').textContent = eur(C.T.recebido);
+  $('r-fotos').textContent = C.T.fotos.toLocaleString('pt-PT');
+  $('r-custo').textContent = eur(C.T.custo);
+  $('r-margem').textContent = pct(C.T.margem);
+  $('r-inv-lbl').textContent = `Recuperado de ${eur(C.investimento)} (pago pela ${invPor})`;
+  $('r-recuperado').textContent = eur(C.recuperado);
+  $('r-bar').style.width = (C.investimento ? Math.min(100, C.recuperado / C.investimento * 100) : 0) + '%';
+  $('r-falta').textContent = C.falta > 0 ? `Falta recuperar ${eur(C.falta)}` : 'Investimento todo recuperado 🎉';
+  $('r-pessoas').innerHTML = `
+    <div class="row"><span class="k">Fica para dividir</span><span class="v">${eur(C.T.dividir)}</span></div>
+    <div class="row"><span class="k">${esc(P[0])}</span><span class="v">${eur(C.T.p1)}</span></div>
+    <div class="row"><span class="k">${esc(P[1])}</span><span class="v">${eur(C.T.p2)}</span></div>
+    <div class="row"><span class="k">${esc(invPor)} — investimento recuperado</span><span class="v">${eur(C.recuperado)}</span></div>`;
+  $('r-compras').innerHTML = `
+    <div class="row"><span class="k">Total</span><span class="v">${eur(C.compras.total)}</span></div>
+    <div class="row"><span class="k">Pago pela ${esc(P[0])}</span><span class="v">${eur(C.compras.p1)}</span></div>
+    <div class="row"><span class="k">Pago pela ${esc(P[1])}</span><span class="v">${eur(C.compras.p2)}</span></div>`;
+
+  // Serviços (mais recente primeiro)
+  const ls = [...C.ordem].reverse();
+  $('listaServicos').innerHTML = ls.length ? ls.map(s => {
+    const L = C.linhas[s.id];
+    return `<button class="item" data-serv="${esc(s.id)}">
+      <div class="top"><span class="t">${esc(s.evento || 'Sem nome')}</span><span class="amt">${eur(s.recebido)}</span></div>
+      <div class="m">${dataPT(s.data)} · ${num(s.fotos).toLocaleString('pt-PT')} fotos · ${esc(L.rolo ? L.rolo.nome : (s.roloNome || 'sem rolo'))}</div>
+      <div class="chips">
+        <span class="chip ok">Lucro ${eur(L.lucro)} · ${pct(L.margem)}</span>
+        ${L.abateReal ? `<span class="chip warn">Abate ${eur(L.abateReal)}</span>` : ''}
+        <span class="chip acc">${esc(P[0])} ${eur(L.p1)} · ${esc(P[1])} ${eur(L.p2)}</span>
+      </div></button>`;
+  }).join('') : '<div class="empty">Ainda não há serviços.<br>Carrega no + para adicionar.</div>';
+
+  // Compras
+  const lc = [...S.compras].sort((a, b) => (b.data || '').localeCompare(a.data || ''));
+  $('listaCompras').innerHTML = lc.length ? lc.map(c => `<button class="item" data-comp="${esc(c.id)}">
+      <div class="top"><span class="t">${esc(c.descricao || 'Compra')}</span><span class="amt">${eur(c.total)}</span></div>
+      <div class="m">${dataPT(c.data)}${c.tipo ? ' · ' + esc(c.tipo) : ''}${c.obs ? ' · ' + esc(c.obs) : ''}</div>
+      <div class="chips"><span class="chip">${esc(P[0])} ${eur(c.p1)}</span><span class="chip">${esc(P[1])} ${eur(c.p2)}</span></div>
+    </button>`).join('') : '<div class="empty">Sem compras registadas.<br>Carrega no + para adicionar.</div>';
+
+  if (vista === 'config' && !cfgSujo) renderConfig();
+}
+
+// ── NAVEGAÇÃO ──
+let vista = 'resumo';
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => irPara(b.dataset.v));
+function irPara(v) {
+  vista = v;
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.v === v));
+  document.querySelectorAll('.view').forEach(s => s.classList.toggle('active', s.id === 'v-' + v));
+  $('fab').style.display = (v === 'servicos' || v === 'compras') ? 'block' : 'none';
+  if (v === 'config') { cfgSujo = false; renderConfig(); }
+  window.scrollTo(0, 0);
+}
+$('fab').onclick = () => vista === 'servicos' ? formServico() : formCompra();
+$('listaServicos').onclick = e => { const b = e.target.closest('[data-serv]'); if (b) formServico(S.servicos.find(s => s.id === b.dataset.serv)); };
+$('listaCompras').onclick = e => { const b = e.target.closest('[data-comp]'); if (b) formCompra(S.compras.find(c => c.id === b.dataset.comp)); };
+
+// ── FOLHA (formulário deslizante) ──
+function abrirFolha(html) { $('sheetBody').innerHTML = html; $('sheetBg').style.display = 'block'; requestAnimationFrame(() => $('sheet').classList.add('open')); }
+function fecharFolha() { $('sheet').classList.remove('open'); $('sheetBg').style.display = 'none'; }
+$('sheetBg').onclick = fecharFolha;
+
+function formServico(s) {
+  const novo = !s; s = s || { data: hoje(), evento: '', recebido: '', fotos: '', roloId: S.config.rolos[0]?.id || '', abater: '', obs: '' };
+  const P = S.config.pessoas;
+  abrirFolha(`<h3>${novo ? 'Novo serviço' : 'Editar serviço'}</h3>
+    <div class="two"><div><label>Data</label><input type="date" id="fData" value="${esc(s.data)}"></div>
+    <div><label>Rolo</label><select id="fRolo">${S.config.rolos.map(r => `<option value="${esc(r.id)}" ${r.id === s.roloId ? 'selected' : ''}>${esc(r.nome)}</option>`).join('')}</select></div></div>
+    <label>Evento / Cliente</label><input id="fEvento" value="${esc(s.evento)}" placeholder="Ex.: Casamento Ana & Rui">
+    <div class="two"><div><label>Recebido (€)</label><input id="fRec" inputmode="decimal" value="${esc(s.recebido)}"></div>
+    <div><label>Nº de fotos</label><input id="fFotos" inputmode="numeric" value="${esc(s.fotos)}"></div></div>
+    <label>Quero abater ao investimento (€)</label><input id="fAbater" inputmode="decimal" value="${esc(s.abater)}" placeholder="0">
+    <div class="hint" id="fFaltaHint"></div>
+    <label>Observação</label><input id="fObs" value="${esc(s.obs)}">
+    <div class="preview" id="fPrev"></div>
+    <div class="actions">${novo ? '' : '<button class="btn del" id="fDel">Apagar</button>'}<button class="btn pri" id="fOk">Guardar</button></div>`);
+  const prev = () => {
+    // simula o cálculo com os valores do formulário
+    const tmp = { ...s, id: s.id || '__novo', criado: s.criado || Date.now(), data: $('fData').value, roloId: $('fRolo').value, recebido: num($('fRec').value), fotos: num($('fFotos').value), abater: num($('fAbater').value) };
+    const backup = S.servicos; S.servicos = [...S.servicos.filter(x => x.id !== tmp.id), tmp];
+    const C = calcular(); S.servicos = backup;
+    const L = C.linhas[tmp.id], faltaAntes = L.faltaDepois + L.abateReal;
+    $('fFaltaHint').textContent = faltaAntes > 0 ? `Nesta data ainda falta recuperar ${eur(faltaAntes)}.` : 'O investimento já está todo recuperado nesta data.';
+    $('fPrev').innerHTML = `
+      <div class="row"><span class="k">Custo/foto</span><span class="v">${eur4(L.cf)}</span></div>
+      <div class="row"><span class="k">Custo das fotos</span><span class="v">${eur(L.custo)}</span></div>
+      <div class="row"><span class="k">Lucro do serviço</span><span class="v">${eur(L.lucro)} · ${pct(L.margem)}</span></div>
+      <div class="row"><span class="k">Abate real</span><span class="v">${eur(L.abateReal)}</span></div>
+      <div class="row"><span class="k">Fica para dividir</span><span class="v">${eur(L.dividir)}</span></div>
+      <div class="row"><span class="k">${esc(P[0])} / ${esc(P[1])}</span><span class="v">${eur(L.p1)} / ${eur(L.p2)}</span></div>`;
+  };
+  ['fData', 'fRolo', 'fRec', 'fFotos', 'fAbater'].forEach(i => $(i).oninput = prev); prev();
+  $('fOk').onclick = async () => {
+    const rolo = S.config.rolos.find(r => r.id === $('fRolo').value);
+    const reg = { id: s.id || uid(), criado: s.criado || Date.now(), data: $('fData').value || hoje(), evento: $('fEvento').value.trim(),
+      recebido: num($('fRec').value), fotos: Math.round(num($('fFotos').value)), roloId: $('fRolo').value,
+      roloNome: rolo?.nome || '', custoFotoGuardado: custoFoto(rolo), abater: num($('fAbater').value), obs: $('fObs').value.trim() };
+    if (!reg.recebido && !reg.fotos) return toast('Preenche o valor recebido ou o nº de fotos', 'erro');
+    await guardar('servicos', reg); fecharFolha(); toast('Serviço guardado');
+  };
+  if (!novo) $('fDel').onclick = async () => { if (confirm('Apagar este serviço?')) { await apagar('servicos', s.id); fecharFolha(); toast('Serviço apagado'); } };
+}
+
+function formCompra(c) {
+  const novo = !c; c = c || { data: hoje(), descricao: '', total: '', p1: '', p2: '', tipo: 'Rolo', obs: '' };
+  const P = S.config.pessoas, tipos = ['Rolo', 'Material', 'Equipamento', 'Outro'];
+  abrirFolha(`<h3>${novo ? 'Nova compra' : 'Editar compra'}</h3>
+    <div class="two"><div><label>Data</label><input type="date" id="cData" value="${esc(c.data)}"></div>
+    <div><label>Tipo</label><select id="cTipo">${tipos.map(t => `<option ${t === c.tipo ? 'selected' : ''}>${t}</option>`).join('')}</select></div></div>
+    <label>Descrição</label><input id="cDesc" value="${esc(c.descricao)}" placeholder="Ex.: Rolo 10x15">
+    <label>Valor total (€)</label><input id="cTotal" inputmode="decimal" value="${esc(c.total)}">
+    <div class="seg" style="margin-top:12px"><button id="cMeias" type="button">A meias</button><button id="cSo1" type="button">Só ${esc(P[0])}</button><button id="cSo2" type="button">Só ${esc(P[1])}</button></div>
+    <div class="two"><div><label style="margin-top:0">${esc(P[0])} (€)</label><input id="cP1" inputmode="decimal" value="${esc(c.p1)}"></div>
+    <div><label style="margin-top:0">${esc(P[1])} (€)</label><input id="cP2" inputmode="decimal" value="${esc(c.p2)}"></div></div>
+    <div class="hint" id="cAviso"></div>
+    <label>Observação</label><input id="cObs" value="${esc(c.obs)}">
+    <div class="actions">${novo ? '' : '<button class="btn del" id="cDel">Apagar</button>'}<button class="btn pri" id="cOk">Guardar</button></div>`);
+  const aviso = () => { const d = r2(num($('cTotal').value) - num($('cP1').value) - num($('cP2').value)); $('cAviso').textContent = d ? `Atenção: a soma das duas é diferente do total (diferença ${eur(d)}).` : ''; };
+  const t = () => num($('cTotal').value);
+  $('cMeias').onclick = () => { $('cP1').value = r2(t() / 2); $('cP2').value = r2(t() - r2(t() / 2)); aviso(); };
+  $('cSo1').onclick = () => { $('cP1').value = r2(t()); $('cP2').value = 0; aviso(); };
+  $('cSo2').onclick = () => { $('cP1').value = 0; $('cP2').value = r2(t()); aviso(); };
+  ['cTotal', 'cP1', 'cP2'].forEach(i => $(i).oninput = aviso); aviso();
+  $('cOk').onclick = async () => {
+    const reg = { id: c.id || uid(), data: $('cData').value || hoje(), tipo: $('cTipo').value, descricao: $('cDesc').value.trim(),
+      total: num($('cTotal').value), p1: num($('cP1').value), p2: num($('cP2').value), obs: $('cObs').value.trim() };
+    if (!reg.total) return toast('Preenche o valor total', 'erro');
+    if (!reg.p1 && !reg.p2) { reg.p1 = r2(reg.total / 2); reg.p2 = r2(reg.total - reg.p1); }
+    await guardar('compras', reg); fecharFolha(); toast('Compra guardada');
+  };
+  if (!novo) $('cDel').onclick = async () => { if (confirm('Apagar esta compra?')) { await apagar('compras', c.id); fecharFolha(); toast('Compra apagada'); } };
+}
+
+// ── CONFIGURAÇÃO ──
+let cfgSujo = false, cfgRascunho = null;
+function renderConfig() {
+  cfgRascunho = structuredClone(S.config);
+  desenharCfg();
+}
+function desenharCfg() {
+  const c = cfgRascunho;
+  $('cfgRolos').innerHTML = c.rolos.map((r, i) => `<div class="edit-line rolo">
+    <input data-r="${i}" data-f="nome" value="${esc(r.nome)}"><input data-r="${i}" data-f="preco" inputmode="decimal" value="${esc(r.preco)}">
+    <input data-r="${i}" data-f="fotos" inputmode="numeric" value="${esc(r.fotos)}"><button class="x" data-rdel="${i}">×</button></div>
+    <div class="hint" style="margin:-4px 0 10px">Custo por foto: ${eur4(custoFoto({ preco: num(r.preco), fotos: num(r.fotos) }))}</div>`).join('');
+  $('cfgInv').innerHTML = c.investimento.map((it, i) => `<div class="edit-line">
+    <input data-i="${i}" data-f="nome" value="${esc(it.nome)}"><input data-i="${i}" data-f="valor" inputmode="decimal" value="${esc(it.valor)}">
+    <button class="x" data-idel="${i}">×</button></div>`).join('');
+  $('cfgInvTotal').textContent = eur(c.investimento.reduce((a, i) => a + num(i.valor), 0));
+  $('cfgP1').value = c.pessoas[0]; $('cfgP2').value = c.pessoas[1];
+  $('cfgInvPor').innerHTML = c.pessoas.map((p, i) => `<option value="${i}" ${i === c.investimentoPor ? 'selected' : ''}>${esc(p)}</option>`).join('');
+}
+$('cfgRolos').oninput = e => { const el = e.target; if (el.dataset.r == null) return; cfgSujo = true; cfgRascunho.rolos[el.dataset.r][el.dataset.f] = el.dataset.f === 'nome' ? el.value : num(el.value); };
+$('cfgRolos').onchange = () => desenharCfg();
+$('cfgInv').oninput = e => { const el = e.target; if (el.dataset.i == null) return; cfgSujo = true; cfgRascunho.investimento[el.dataset.i][el.dataset.f] = el.dataset.f === 'nome' ? el.value : num(el.value); $('cfgInvTotal').textContent = eur(cfgRascunho.investimento.reduce((a, i) => a + num(i.valor), 0)); };
+$('cfgRolos').onclick = e => { const i = e.target.dataset.rdel; if (i == null) return;
+  const r = cfgRascunho.rolos[i]; if (S.servicos.some(s => s.roloId === r.id) && !confirm(`O ${r.nome} está usado em serviços. Esses serviços mantêm o custo por foto que tinham. Remover?`)) return;
+  cfgRascunho.rolos.splice(i, 1); cfgSujo = true; desenharCfg(); };
+$('cfgInv').onclick = e => { const i = e.target.dataset.idel; if (i == null) return; cfgRascunho.investimento.splice(i, 1); cfgSujo = true; desenharCfg(); };
+$('addRolo').onclick = () => { cfgRascunho.rolos.push({ id: uid(), nome: 'Novo rolo', preco: 0, fotos: 1400 }); cfgSujo = true; desenharCfg(); };
+$('addInv').onclick = () => { cfgRascunho.investimento.push({ id: uid(), nome: '', valor: 0 }); cfgSujo = true; desenharCfg(); };
+$('cfgP1').oninput = e => { cfgRascunho.pessoas[0] = e.target.value; cfgSujo = true; };
+$('cfgP2').oninput = e => { cfgRascunho.pessoas[1] = e.target.value; cfgSujo = true; };
+$('cfgInvPor').onchange = e => { cfgRascunho.investimentoPor = +e.target.value; cfgSujo = true; };
+$('guardarCfg').onclick = async () => {
+  const c = cfgRascunho;
+  c.pessoas = c.pessoas.map((p, i) => (p || '').trim() || ['Pessoa 1', 'Pessoa 2'][i]);
+  c.rolos = c.rolos.filter(r => (r.nome || '').trim());
+  if (!c.rolos.length) return toast('Precisas de pelo menos um rolo', 'erro');
+  await guardarConfig(c); cfgSujo = false; renderConfig(); toast('Configuração guardada');
+};
+
+// ── CÓPIAS DE SEGURANÇA ──
+function descarregar(nome, conteudo, tipo) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([conteudo], { type: tipo })); a.download = nome; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
+$('btnExport').onclick = () => descarregar(`memorybox-copia-${hoje()}.json`, JSON.stringify(S, null, 2), 'application/json');
+$('btnImport').onclick = () => $('fileImport').click();
+$('fileImport').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    if (!d.config || !Array.isArray(d.servicos) || !Array.isArray(d.compras)) throw 0;
+    if (!confirm(`Substituir os dados atuais pela cópia (${d.servicos.length} serviços, ${d.compras.length} compras)?`)) return;
+    await substituirTudo(d); toast('Cópia importada');
+  } catch { toast('Ficheiro inválido', 'erro'); }
+};
+$('btnCsv').onclick = () => {
+  const C = calcular(), P = S.config.pessoas, f = n => (Number(n) || 0).toFixed(2).replace('.', ',');
+  const cab = ['Data', 'Evento / Cliente', 'Recebido (€)', 'Nº fotos', 'Rolo', 'Custo/foto (€)', 'Custo fotos (€)', 'Lucro do serviço (€)', 'Margem', 'Quero abater (€)', 'Abate real (€)', 'Fica para dividir (€)', P[0] + ' (€)', P[1] + ' (€)'];
+  const linhas = C.ordem.map(s => { const L = C.linhas[s.id]; return [dataPT(s.data), s.evento, f(s.recebido), s.fotos, L.rolo?.nome || s.roloNome || '', (L.cf).toFixed(4).replace('.', ','), f(L.custo), f(L.lucro), pct(L.margem), f(s.abater), f(L.abateReal), f(L.dividir), f(L.p1), f(L.p2)]; });
+  linhas.push(['TOTAIS', '', f(C.T.recebido), C.T.fotos, '', '', f(C.T.custo), f(C.T.lucro), pct(C.T.margem), '', f(C.T.abate), f(C.T.dividir), f(C.T.p1), f(C.T.p2)]);
+  const csv = '﻿' + [cab, ...linhas].map(l => l.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(';')).join('\r\n');
+  descarregar(`memorybox-servicos-${hoje()}.csv`, csv, 'text/csv;charset=utf-8');
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  ARMAZENAMENTO: local (este telemóvel) ou nuvem (Firebase)
+// ═══════════════════════════════════════════════════════════════
+function gravarLocal() { try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch { toast('Não foi possível guardar neste telemóvel', 'erro'); } }
+function lerLocal() { try { const d = JSON.parse(localStorage.getItem(LS_KEY)); if (d && d.config) return d; } catch {} return null; }
+
+async function guardar(col, reg) {
+  const lista = S[col], i = lista.findIndex(x => x.id === reg.id);
+  if (i >= 0) lista[i] = reg; else lista.push(reg);
+  render();
+  if (modo === 'local') return gravarLocal();
+  try { await fb.setDoc(fb.doc(fb.db, 'memorybox', 'v1', col, reg.id), reg); } catch (e) { erroNuvem(e); }
+}
+async function apagar(col, id) {
+  S[col] = S[col].filter(x => x.id !== id); render();
+  if (modo === 'local') return gravarLocal();
+  try { await fb.deleteDoc(fb.doc(fb.db, 'memorybox', 'v1', col, id)); } catch (e) { erroNuvem(e); }
+}
+async function guardarConfig(c) {
+  S.config = structuredClone(c); render();
+  if (modo === 'local') return gravarLocal();
+  try { await fb.setDoc(fb.doc(fb.db, 'memorybox', 'v1'), { config: S.config }, { merge: true }); } catch (e) { erroNuvem(e); }
+}
+async function substituirTudo(d) {
+  if (modo === 'local') { S = { config: d.config, servicos: d.servicos, compras: d.compras }; gravarLocal(); render(); return; }
+  for (const s of S.servicos) await fb.deleteDoc(fb.doc(fb.db, 'memorybox', 'v1', 'servicos', s.id));
+  for (const c of S.compras) await fb.deleteDoc(fb.doc(fb.db, 'memorybox', 'v1', 'compras', c.id));
+  await guardarConfig(d.config);
+  for (const s of d.servicos) await guardar('servicos', s);
+  for (const c of d.compras) await guardar('compras', c);
+}
+function erroNuvem(e) { console.error(e); toast(e?.code === 'permission-denied' ? 'Sem permissão para gravar (ver regras do Firebase)' : 'Erro ao guardar na nuvem', 'erro'); }
+function estadoSync(on, txt) { $('syncDot').className = 'dot ' + (on ? 'on' : 'off'); $('syncTxt').textContent = txt; }
+
+async function iniciarLocal() {
+  modo = 'local';
+  S = lerLocal() || structuredClone(DADOS_INICIAIS);
+  gravarLocal();
+  estadoSync(false, 'neste telemóvel');
+  $('modoTxt').textContent = 'Os dados estão guardados só neste telemóvel. Faz uma cópia de segurança de vez em quando.';
+  $('app').style.display = 'block'; render();
+}
+
+async function iniciarNuvem() {
+  const V = '10.7.1', base = `https://www.gstatic.com/firebasejs/${V}/`;
+  const [{ initializeApp }, A, F] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-auth.js'), import(base + 'firebase-firestore.js')]);
+  const app = initializeApp(FIREBASE_CONFIG);
+  const db = F.initializeFirestore(app, { ignoreUndefinedProperties: true, localCache: F.persistentLocalCache({ tabManager: F.persistentMultipleTabManager() }) });
+  const auth = A.getAuth(app);
+  fb = { db, doc: F.doc, setDoc: F.setDoc, deleteDoc: F.deleteDoc };
+  modo = 'nuvem';
+  const emApp = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  $('btnLogin').onclick = async () => {
+    const p = new A.GoogleAuthProvider();
+    try { if (emApp()) return await A.signInWithRedirect(auth, p); await A.signInWithPopup(auth, p); }
+    catch (e) { if (e.code === 'auth/popup-blocked') return A.signInWithRedirect(auth, p); toast('Não foi possível entrar', 'erro'); }
+  };
+  A.getRedirectResult(auth).catch(() => {});
+  $('btnSair').style.display = 'block';
+  $('btnSair').onclick = () => A.signOut(auth);
+  let desligar = [];
+  A.onAuthStateChanged(auth, async user => {
+    desligar.forEach(f => f()); desligar = [];
+    if (user && !EMAILS_PERMITIDOS.map(e => e.toLowerCase()).includes((user.email || '').toLowerCase())) {
+      toast('Este email não está autorizado', 'erro'); await A.signOut(auth); return;
+    }
+    if (!user) { $('app').style.display = 'none'; $('ecraLogin').style.display = 'flex'; return; }
+    $('ecraLogin').style.display = 'none'; $('app').style.display = 'block';
+    $('modoTxt').textContent = `Dados partilhados na nuvem · sessão: ${user.email}`;
+    estadoSync(navigator.onLine, navigator.onLine ? 'sincronizado' : 'sem rede');
+    const raiz = F.doc(db, 'memorybox', 'v1');
+    // Primeira vez: cria a configuração e o serviço da folha
+    const snap = await F.getDoc(raiz).catch(e => { erroNuvem(e); return null; });
+    if (snap && !snap.exists()) {
+      await F.setDoc(raiz, { config: DADOS_INICIAIS.config });
+      for (const s of DADOS_INICIAIS.servicos) await F.setDoc(F.doc(db, 'memorybox', 'v1', 'servicos', s.id), s);
+    }
+    desligar.push(F.onSnapshot(raiz, d => { if (d.exists() && d.data().config) { S.config = d.data().config; render(); } }, erroNuvem));
+    for (const col of ['servicos', 'compras'])
+      desligar.push(F.onSnapshot(F.collection(db, 'memorybox', 'v1', col), q => { S[col] = q.docs.map(d => d.data()); render(); }, erroNuvem));
+  });
+  addEventListener('online', () => estadoSync(true, 'sincronizado'));
+  addEventListener('offline', () => estadoSync(false, 'sem rede'));
+}
+
+(FIREBASE_CONFIG ? iniciarNuvem() : iniciarLocal()).catch(e => { console.error(e); toast('Erro ao iniciar — a usar dados locais', 'erro'); iniciarLocal(); });
+
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
