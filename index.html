@@ -72,7 +72,8 @@ nav button.active{color:var(--accent);font-weight:700}
 .sheet{position:fixed;left:0;right:0;bottom:0;max-height:92vh;overflow:auto;background:var(--bg);border-radius:20px 20px 0 0;z-index:21;padding:8px 16px calc(18px + env(safe-area-inset-bottom));transform:translateY(105%);visibility:hidden;transition:transform .22s ease,visibility 0s .22s;max-width:720px;margin:0 auto}
 .sheet.open{transform:none;visibility:visible;transition:transform .22s ease}
 .grab{width:40px;height:5px;border-radius:3px;background:#cfc4cc;margin:4px auto 10px}
-.sheet h3{margin:4px 0 14px;font-size:19px}
+.sheet h3{margin:4px 0 14px;font-size:19px;padding-right:44px}
+.fechar{position:absolute;top:14px;right:12px;width:38px;height:38px;border-radius:50%;border:0;background:var(--line);font-size:24px;line-height:1;cursor:pointer;color:var(--ink)}
 label{display:block;font-size:13px;color:var(--muted);margin:12px 0 5px}
 input,select,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:16px}
 input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-color:transparent}
@@ -214,7 +215,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-c
 </div>
 
 <div class="sheet-bg" id="sheetBg"></div>
-<div class="sheet" id="sheet"><div class="grab"></div><div id="sheetBody"></div></div>
+<div class="sheet" id="sheet"><div class="grab"></div><button class="fechar" id="sheetFechar" aria-label="Fechar">×</button><div id="sheetBody"></div></div>
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -369,6 +370,7 @@ $('listaCompras').onclick = e => { const b = e.target.closest('[data-comp]'); if
 function abrirFolha(html) { $('sheetBody').innerHTML = html; $('sheetBg').style.display = 'block'; requestAnimationFrame(() => $('sheet').classList.add('open')); }
 function fecharFolha() { $('sheet').classList.remove('open'); $('sheetBg').style.display = 'none'; }
 $('sheetBg').onclick = fecharFolha;
+$('sheetFechar').onclick = fecharFolha;
 
 function formServico(s) {
   const novo = !s; s = s || { data: hoje(), evento: '', recebido: '', fotos: '', roloId: S.config.rolos[0]?.id || '', abater: '', obs: '' };
