@@ -122,6 +122,33 @@ label.mini{font-size:12px;margin:0;color:var(--muted)}label.mini input{margin-to
 .sugest b{display:block;font-size:16px;color:var(--ink)}
 .big-res{background:var(--brand);color:#fff;border-radius:14px;padding:14px;margin-top:12px}
 .big-res .lbl{font-size:13px;opacity:.8}.big-res .val{font-size:28px;font-weight:800}
+.estado{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.3px}
+.estado.orcamento{background:#e7e3f3;color:#5b4a8a}.estado.confirmado{background:var(--warn-soft);color:var(--warn)}
+.estado.sinal{background:#fde7d6;color:#b05a12}.estado.pago{background:var(--ok-soft);color:var(--ok)}.estado.cancelado{background:#eee;color:#777;text-decoration:line-through}
+.item.inativo{opacity:.72}
+.acoes{display:flex;gap:8px;margin-top:10px}
+.acoes a{flex:1;text-align:center;text-decoration:none;font-weight:700;font-size:14px;padding:10px;border-radius:12px;background:var(--bg);color:var(--ink)}
+.acoes a.wa{background:#dcf5e5;color:#1a7f45}
+.secao{font-size:13px;font-weight:700;color:var(--muted);margin:18px 4px 8px;text-transform:uppercase;letter-spacing:.5px}
+.aviso{background:var(--warn-soft);color:#7a4f0d;border-radius:14px;padding:12px 14px;margin-bottom:12px;font-size:14px;line-height:1.4}
+.aviso.mau{background:#f9dedb;color:#8e2a1f}
+.stock{padding:10px 0;border-bottom:1px solid var(--line)}.stock:last-child{border-bottom:0}
+.stock .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.stock .nm{font-weight:700}.stock .q{font-weight:800}
+.sbar{height:9px;background:var(--line);border-radius:6px;overflow:hidden;margin:7px 0 5px;display:flex;gap:2px}
+.sbar i{display:block;height:100%}.sbar .u{background:#7b4fa0;border-radius:6px 0 0 6px}.sbar .r{background:repeating-linear-gradient(45deg,#e0607e 0 4px,#f2a9ba 4px 8px)}
+.stock .d{font-size:13px;color:var(--muted)}
+.prox{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}.prox:last-child{border-bottom:0}
+.prox .dt{min-width:46px;text-align:center;background:var(--bg);border-radius:10px;padding:6px 4px;line-height:1.1}
+.prox .dt b{display:block;font-size:18px}.prox .dt span{font-size:11.5px;color:var(--muted);text-transform:uppercase}
+.prox .info{flex:1;min-width:0}.prox .info .t{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prox .info .m{font-size:13px;color:var(--muted)}
+.leg{display:flex;gap:16px;font-size:13px;color:var(--muted);margin-bottom:6px}.leg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+#grafico svg{display:block;width:100%;height:auto;touch-action:manipulation}
+#grafTip{font-size:14px;min-height:22px;margin-top:6px}
+.tab{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}.tab td,.tab th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:right}.tab td:first-child,.tab th:first-child{text-align:left}
+details summary{cursor:pointer;color:var(--muted);font-size:13.5px;margin-top:8px}
+.edit-line.rolo{grid-template-columns:1fr 1fr 1fr 40px}
 .dia{font-size:13px;font-weight:700;color:var(--muted);margin:16px 4px 8px}
 .mov{background:var(--card);border-radius:14px;padding:12px 14px;margin-bottom:8px}
 .mov .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
@@ -158,6 +185,7 @@ nav button{font-size:12px}
 <main>
   <!-- RESUMO -->
   <section class="view active" id="v-resumo">
+    <div id="r-avisos"></div>
     <div class="card hero">
       <div class="lbl">Lucro dos serviços</div>
       <div class="big" id="r-lucro">0 €</div>
@@ -170,6 +198,22 @@ nav button{font-size:12px}
       <div class="stat"><div class="lbl">Margem</div><div class="val" id="r-margem"></div></div>
       <div class="stat"><div class="lbl">Deslocações</div><div class="val" id="r-desl"></div></div>
       <div class="stat"><div class="lbl">Km percorridos</div><div class="val" id="r-km"></div></div>
+      <div class="stat"><div class="lbl">Por receber</div><div class="val" id="r-receber"></div></div>
+      <div class="stat"><div class="lbl">Orçamentos</div><div class="val" id="r-orc"></div></div>
+    </div>
+
+    <h2>Próximos eventos</h2>
+    <div class="card" id="r-prox"></div>
+
+    <h2>Stock de rolos</h2>
+    <div class="card" id="r-stock"></div>
+
+    <h2>Recebido e lucro por mês</h2>
+    <div class="card">
+      <div class="leg"><span><i style="background:#7b4fa0"></i>Recebido</span><span><i style="background:#e0607e"></i>Lucro</span></div>
+      <div id="grafico"></div>
+      <div id="grafTip" class="hint">Toca num mês para ver os valores.</div>
+      <details><summary>Ver em tabela</summary><div id="grafTab"></div></details>
     </div>
 
     <h2>Investimento inicial</h2>
@@ -193,9 +237,9 @@ nav button{font-size:12px}
     <h2>Serviços</h2>
     <div id="listaServicos"></div>
     <div class="card how">
-      <b>Como funciona:</b> Recebido = dinheiro que entrou. “Quero abater” = quanto queres usar para recuperar o investimento.
-      “Abate real” é limitado ao que ainda falta recuperar. “Fica para dividir” = Recebido − Abate real, dividido 50% / 50%.
-      O custo das fotos serve para calcular o lucro do serviço.
+      <b>Como funciona:</b> Cada serviço tem um estado: <b>Orçamento</b> (ainda não conta), <b>Confirmado</b> (conta nos totais e no stock) ou <b>Cancelado</b>.
+      “Já recebido” mostra o que falta receber. “Quero abater” = quanto queres usar para recuperar o investimento; o “abate real” é limitado ao que ainda falta recuperar.
+      “Fica para dividir” = Valor − Abate real, dividido 50% / 50%. O custo das fotos e da deslocação servem para calcular o lucro do serviço.
     </div>
   </section>
 
@@ -219,6 +263,8 @@ nav button{font-size:12px}
     <div class="card">
       <div id="cfgRolos"></div>
       <button class="btn sm" id="addRolo">+ Adicionar rolo</button>
+      <label>Avisar quando restarem menos de (fotos)</label><input id="cfgAviso" inputmode="numeric" placeholder="200">
+      <div class="hint">“Rolos no início” = quantos rolos tinham antes de registar compras na app. As compras do tipo Rolo somam ao stock.</div>
     </div>
 
     <h2>Investimento inicial</h2>
@@ -313,8 +359,8 @@ const DADOS_INICIAIS = {
     carros: [],
     investimentoPor: 0,
     rolos: [
-      { id: 'r1', nome: 'Rolo 10x15', preco: 128, fotos: 1400 },
-      { id: 'r2', nome: 'Rolo 15x20', preco: 184.22, fotos: 1400 }
+      { id: 'r1', nome: 'Rolo 10x15', preco: 128, fotos: 1400, iniciais: 1 },
+      { id: 'r2', nome: 'Rolo 15x20', preco: 184.22, fotos: 1400, iniciais: 1 }
     ],
     investimento: [
       { id: 'i1', nome: 'Impressora', valor: 699 },
@@ -356,7 +402,7 @@ function toast(msg, tipo) { const t = $('toast'); t.textContent = msg; t.classNa
 // Mapas gratuitos (os mesmos da LenhaPro): OpenStreetMap (Nominatim) para encontrar a localidade
 // e OSRM para os km de carro. O Google Maps abre-se para ver o caminho.
 const BASE_DEFAULT = 'Casal Comba, Mealhada';
-function normCfg(c) { c.base = c.base || BASE_DEFAULT; c.carros = c.carros || []; c.precoComb = num(c.precoComb); return c; }
+function normCfg(c) { c.base = c.base || BASE_DEFAULT; c.carros = c.carros || []; c.precoComb = num(c.precoComb); c.avisoFotos = c.avisoFotos == null ? 200 : num(c.avisoFotos); c.rolos.forEach(r => { if (r.iniciais == null) r.iniciais = 1; }); return c; }
 const comPais = t => /portugal/i.test(t) ? t : t + ', Portugal';
 const urlRota = dest => `https://www.google.com/maps/dir/?api=1&travelmode=driving&origin=${encodeURIComponent(comPais(S.config.base))}&destination=${encodeURIComponent(comPais(dest))}`;
 const geoCache = {};
@@ -422,6 +468,31 @@ const htmlKm = (prefixo, local) => `<div class="kmline"><input id="${prefixo}Loc
 const htmlCarros = (id, sel) => `<select id="${id}"><option value="">— escolher —</option>${S.config.carros.map(c => `<option value="${esc(c.id)}" ${c.id === sel ? 'selected' : ''}>${esc(c.nome)}${num(c.consumo) ? ` (${String(c.consumo).replace('.', ',')} L)` : ''}</option>`).join('')}</select>`;
 
 // ── CÁLCULOS (mesma lógica da folha) ──
+const ESTADOS = { orcamento: 'Orçamento', confirmado: 'Confirmado', cancelado: 'Cancelado' };
+const estadoDe = s => s.estado || 'confirmado';
+const ativo = s => estadoDe(s) === 'confirmado';                       // conta nos totais
+const pagoDe = s => s.pago == null ? num(s.recebido) : num(s.pago);     // serviços antigos: já recebidos
+function etiqueta(s) {
+  const e = estadoDe(s); if (e !== 'confirmado') return { cls: e, txt: ESTADOS[e] };
+  const pg = pagoDe(s), tot = num(s.recebido);
+  return pg >= tot && tot > 0 ? { cls: 'pago', txt: 'Pago' } : pg > 0 ? { cls: 'sinal', txt: 'Sinal pago' } : { cls: 'confirmado', txt: 'Confirmado' };
+}
+const telLimpo = t => { let d = String(t || '').replace(/[^\d+]/g, ''); if (d.startsWith('+')) d = d.slice(1); if (d.startsWith('00')) d = d.slice(2); if (d.length === 9) d = '351' + d; return d; };
+const htmlContacto = tel => telLimpo(tel).length >= 9 ? `<div class="acoes"><a href="tel:+${telLimpo(tel)}" data-link>📞 Ligar</a><a class="wa" href="https://wa.me/${telLimpo(tel)}" target="_blank" rel="noopener" data-link>WhatsApp</a></div>` : '';
+// stock: (rolos no início + rolos comprados) × fotos por rolo − fotos já usadas; os eventos futuros ficam reservados
+function stockRolos() {
+  const h = hoje();
+  return S.config.rolos.map(r => {
+    const comprados = S.compras.filter(c => c.roloId === r.id).reduce((a, c) => a + (num(c.quantidade) || 0), 0);
+    const total = (num(r.iniciais) + comprados) * num(r.fotos);
+    const deste = S.servicos.filter(s => ativo(s) && s.roloId === r.id);
+    const usadas = deste.filter(s => (s.data || '') <= h).reduce((a, s) => a + num(s.fotos), 0);
+    const reservadas = deste.filter(s => (s.data || '') > h).reduce((a, s) => a + num(s.fotos), 0);
+    const restam = total - usadas, depois = restam - reservadas;
+    return { rolo: r, comprados, total, usadas, reservadas, restam, depois, baixo: depois < S.config.avisoFotos };
+  });
+}
+
 function custoFoto(rolo) { return rolo && rolo.fotos > 0 ? rolo.preco / rolo.fotos : 0; }
 function calcular() {
   const cfg = S.config;
@@ -430,7 +501,7 @@ function calcular() {
   const ordem = [...S.servicos].sort((a, b) => (a.data || '').localeCompare(b.data || '') || (a.criado || 0) - (b.criado || 0));
   let falta = investimento;
   const linhas = {};
-  const T = { recebido: 0, fotos: 0, custo: 0, desl: 0, km: 0, lucro: 0, abate: 0, dividir: 0, p1: 0, p2: 0 };
+  const T = { recebido: 0, fotos: 0, custo: 0, desl: 0, km: 0, lucro: 0, abate: 0, dividir: 0, p1: 0, p2: 0, receber: 0, orc: 0 };
   for (const s of ordem) {
     const rolo = cfg.rolos.find(r => r.id === s.roloId);
     const cf = rolo ? custoFoto(rolo) : num(s.custoFotoGuardado);
@@ -439,11 +510,16 @@ function calcular() {
     const desl = num(s.custoDesloc);
     const lucro = recebido - custo - desl;
     const margem = recebido ? lucro / recebido : 0;
-    const abateReal = Math.max(0, Math.min(num(s.abater), r2(falta), recebido));
+    const conta = ativo(s);   // orçamentos e cancelados não contam nos totais nem abatem
+    const abateReal = conta ? Math.max(0, Math.min(num(s.abater), r2(falta), recebido)) : 0;
     falta = r2(falta - abateReal);
     const dividir = recebido - abateReal;
-    const L = { rolo, cf, custo, desl, lucro, margem, abateReal, dividir, p1: dividir / 2, p2: dividir / 2, faltaDepois: falta };
+    const receber = conta ? Math.max(0, r2(recebido - pagoDe(s))) : 0;
+    const L = { rolo, cf, custo, desl, lucro, margem, abateReal, dividir, p1: dividir / 2, p2: dividir / 2, faltaDepois: falta, conta, receber };
     linhas[s.id] = L;
+    if (estadoDe(s) === 'orcamento') T.orc++;
+    if (!conta) continue;
+    T.receber += receber;
     T.recebido += recebido; T.fotos += fotos; T.custo += custo; T.desl += desl; T.km += num(s.km) * 2 * (num(s.deslocacoes) || 1) * (s.km ? 1 : 0); T.lucro += lucro;
     T.abate += abateReal; T.dividir += dividir; T.p1 += L.p1; T.p2 += L.p2;
   }
@@ -452,13 +528,72 @@ function calcular() {
   return { investimento, recuperado: T.abate, falta: Math.max(0, r2(investimento - T.abate)), T, linhas, ordem, compras };
 }
 
+// ── RESUMO: avisos, próximos eventos, stock e gráfico ──
+const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+const MESES_L = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+const fotosN = n => Math.round(n).toLocaleString('pt-PT');
+function renderExtrasResumo(C) {
+  const h = hoje(), st = stockRolos();
+  // avisos de stock
+  $('r-avisos').innerHTML = st.filter(x => x.baixo && (x.usadas || x.reservadas)).map(x => x.depois < 0
+    ? `<div class="aviso mau">⚠️ <b>${esc(x.rolo.nome)}:</b> os próximos eventos precisam de ${fotosN(x.reservadas)} fotos e só restam ${fotosN(x.restam)}. Faltam <b>${fotosN(-x.depois)} fotos</b> — compra mais rolos.</div>`
+    : `<div class="aviso">⚠️ <b>${esc(x.rolo.nome)}:</b> ${x.reservadas ? `depois dos próximos eventos ficam` : 'restam'} só <b>${fotosN(x.depois)} fotos</b>. Pensa em comprar mais.</div>`).join('');
+  // próximos eventos
+  const prox = C.ordem.filter(s => (s.data || '') >= h && estadoDe(s) !== 'cancelado').slice(0, 6);
+  $('r-prox').innerHTML = prox.length ? prox.map(s => { const d = (s.data || '').split('-'), et = etiqueta(s), L = C.linhas[s.id];
+    return `<div class="prox" data-serv="${esc(s.id)}"><div class="dt"><b>${+d[2] || ''}</b><span>${MESES[+d[1] - 1] || ''}</span></div>
+      <div class="info"><div class="t">${esc(s.evento || 'Sem nome')}</div><div class="m">${s.localidade ? '📍 ' + esc(s.localidade) + ' · ' : ''}${fotosN(num(s.fotos))} fotos${L.receber ? ' · falta ' + eur(L.receber) : ''}</div></div>
+      <span class="estado ${et.cls}">${et.txt}</span></div>`; }).join('')
+    : '<div class="hint" style="margin:0">Sem eventos marcados. Os serviços com data de hoje em diante aparecem aqui.</div>';
+  // stock de rolos
+  $('r-stock').innerHTML = st.map(x => { const tot = Math.max(x.total, 1), pu = Math.min(100, x.usadas / tot * 100), pr = Math.min(100 - pu, x.reservadas / tot * 100);
+    return `<div class="stock"><div class="top"><span class="nm">${esc(x.rolo.nome)}</span><span class="q" style="color:${x.depois < 0 ? 'var(--bad)' : x.baixo ? 'var(--warn)' : 'var(--ink)'}">${fotosN(x.restam)} fotos</span></div>
+      <div class="sbar"><i class="u" style="width:${pu}%"></i><i class="r" style="width:${pr}%"></i></div>
+      <div class="d">Usadas ${fotosN(x.usadas)} de ${fotosN(x.total)} (${fmtIn(num(x.rolo.iniciais) + x.comprados)} rolo${num(x.rolo.iniciais) + x.comprados === 1 ? '' : 's'})${x.reservadas ? ` · reservadas ${fotosN(x.reservadas)} para próximos eventos → ficam <b>${fotosN(x.depois)}</b>` : ''}${x.restam > 0 && num(x.rolo.fotos) ? ` · ≈ ${(x.restam / num(x.rolo.fotos)).toLocaleString('pt-PT', { maximumFractionDigits: 1 })} rolos` : ''}</div></div>`; }).join('')
+    + '<div class="hint">Para somar rolos ao stock, regista a compra em Compras com o tipo “Rolo”.</div>';
+  desenharGrafico(C);
+}
+function dadosMensais(C) {
+  const porMes = {};
+  for (const s of C.ordem) { if (!C.linhas[s.id].conta || !s.data) continue; const k = s.data.slice(0, 7); porMes[k] = porMes[k] || { rec: 0, luc: 0, n: 0 }; porMes[k].rec += num(s.recebido); porMes[k].luc += C.linhas[s.id].lucro; porMes[k].n++; }
+  const ks = Object.keys(porMes).sort(); if (!ks.length) return [];
+  const agora = hoje().slice(0, 7), fim = ks[ks.length - 1] > agora ? ks[ks.length - 1] : agora;
+  const meses = []; let [a, m] = fim.split('-').map(Number);
+  for (let i = 0; i < 12; i++) { const k = `${a}-${String(m).padStart(2, '0')}`; meses.unshift({ k, a, m, ...(porMes[k] || { rec: 0, luc: 0, n: 0 }) }); if (k <= ks[0] && i >= 5) break; if (--m === 0) { m = 12; a--; } }
+  return meses;
+}
+function desenharGrafico(C) {
+  const d = dadosMensais(C);
+  if (!d.length) { $('grafico').innerHTML = '<div class="hint" style="margin:0">Ainda sem serviços confirmados.</div>'; $('grafTab').innerHTML = ''; $('grafTip').textContent = ''; return; }
+  const W = 340, H = 190, top = 10, bot = 24, left = 40, right = 6, ph = H - top - bot;
+  const max = Math.max(1, ...d.map(x => Math.max(x.rec, x.luc)));
+  const passo = [10, 20, 50, 100, 200, 250, 500, 1000, 2000, 2500, 5000, 10000].find(p => max / p <= 4) || 20000, topo = Math.ceil(max / passo) * passo;
+  const y = v => top + ph - Math.max(0, v) / topo * ph, gw = (W - left - right) / d.length, bw = Math.min(14, (gw - 6) / 2);
+  let g = '';
+  for (let v = 0; v <= topo; v += passo) g += `<line x1="${left}" x2="${W - right}" y1="${y(v)}" y2="${y(v)}" stroke="#e8e0e6" stroke-width="1"/><text x="${left - 5}" y="${y(v) + 4}" text-anchor="end" font-size="10" fill="#7a6d80">${v >= 1000 ? (v / 1000).toLocaleString('pt-PT') + 'k' : v}</text>`;
+  const barra = (x, v, cor) => { const yy = y(v), hh = top + ph - yy; if (hh < 0.5) return ''; const r = Math.min(4, hh, bw / 2);
+    return `<path d="M${x},${top + ph} V${yy + r} Q${x},${yy} ${x + r},${yy} H${x + bw - r} Q${x + bw},${yy} ${x + bw},${yy + r} V${top + ph} Z" fill="${cor}"/>`; };
+  d.forEach((x, i) => { const cx = left + gw * i + gw / 2;
+    g += `<g data-i="${i}"><rect x="${left + gw * i}" y="${top}" width="${gw}" height="${ph + bot}" fill="transparent" class="hit"/>
+      ${barra(cx - bw - 1, x.rec, '#7b4fa0')}${barra(cx + 1, x.luc, '#e0607e')}
+      <text x="${cx}" y="${H - 7}" text-anchor="middle" font-size="10" fill="#7a6d80">${MESES[x.m - 1]}</text></g>`; });
+  $('grafico').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Recebido e lucro por mês">${g}<line x1="${left}" x2="${W - right}" y1="${top + ph}" y2="${top + ph}" stroke="#cfc4cc"/><rect id="grafSel" x="0" y="${top}" width="0" height="${ph}" fill="#2b1d33" opacity=".06" pointer-events="none"/></svg>`;
+  const mostrar = i => { const x = d[i]; $('grafSel').setAttribute('x', left + gw * i); $('grafSel').setAttribute('width', gw);
+    $('grafTip').className = ''; $('grafTip').innerHTML = `<b>${MESES_L[x.m - 1]} ${x.a}</b> · ${x.n} serviço${x.n === 1 ? '' : 's'} · Recebido <b>${eur(x.rec)}</b> · Lucro <b>${eur(x.luc)}</b>`; };
+  $('grafico').querySelectorAll('g[data-i]').forEach(el => { el.onclick = () => mostrar(+el.dataset.i); el.onmouseenter = () => mostrar(+el.dataset.i); });
+  $('grafTab').innerHTML = `<table class="tab"><tr><th>Mês</th><th>Serviços</th><th>Recebido</th><th>Lucro</th></tr>${[...d].reverse().filter(x => x.n).map(x => `<tr><td>${MESES[x.m - 1]} ${x.a}</td><td>${x.n}</td><td>${eur(x.rec)}</td><td>${eur(x.luc)}</td></tr>`).join('')}</table>`;
+}
+
 // ── DESENHAR ──
 function render() {
   normCfg(S.config);
   const C = calcular(), P = S.config.pessoas, invPor = P[S.config.investimentoPor] || P[0];
   // Resumo
   $('r-lucro').textContent = eur(C.T.lucro);
-  $('r-lucro-sub').textContent = `${S.servicos.length} serviço${S.servicos.length === 1 ? '' : 's'} · margem ${pct(C.T.margem)}`;
+  const nAtivos = S.servicos.filter(ativo).length;
+  $('r-lucro-sub').textContent = `${nAtivos} serviço${nAtivos === 1 ? '' : 's'} · margem ${pct(C.T.margem)}`;
+  $('r-receber').textContent = eur(C.T.receber);
+  $('r-orc').textContent = C.T.orc;
   $('r-recebido').textContent = eur(C.T.recebido);
   $('r-fotos').textContent = C.T.fotos.toLocaleString('pt-PT');
   $('r-custo').textContent = eur(C.T.custo);
@@ -479,26 +614,34 @@ function render() {
     <div class="row"><span class="k">Pago pela ${esc(P[0])}</span><span class="v">${eur(C.compras.p1)}</span></div>
     <div class="row"><span class="k">Pago pela ${esc(P[1])}</span><span class="v">${eur(C.compras.p2)}</span></div>`;
 
-  // Serviços (mais recente primeiro)
-  const ls = [...C.ordem].reverse();
-  $('listaServicos').innerHTML = ls.length ? ls.map(s => {
-    const L = C.linhas[s.id];
-    return `<button class="item" data-serv="${esc(s.id)}">
+  renderExtrasResumo(C);
+
+  // Serviços: próximos (por ordem de data) e depois os anteriores (mais recente primeiro)
+  const h = hoje();
+  const proximos = C.ordem.filter(s => (s.data || '') >= h && estadoDe(s) !== 'cancelado');
+  const anteriores = [...C.ordem].reverse().filter(s => !proximos.includes(s));
+  const itemServ = s => {
+    const L = C.linhas[s.id], et = etiqueta(s);
+    return `<div class="item${L.conta ? '' : ' inativo'}" role="button" tabindex="0" data-serv="${esc(s.id)}">
       <div class="top"><span class="t">${esc(s.evento || 'Sem nome')}</span><span class="amt">${eur(s.recebido)}</span></div>
+      <div style="margin-top:6px"><span class="estado ${et.cls}">${et.txt}</span>${L.receber ? ` <span class="chip warn" style="margin-left:4px">Falta receber ${eur(L.receber)}</span>` : ''}</div>
       <div class="m">${dataPT(s.data)} · ${num(s.fotos).toLocaleString('pt-PT')} fotos · ${esc(L.rolo ? L.rolo.nome : (s.roloNome || 'sem rolo'))}${s.localidade ? ` · 📍 ${esc(s.localidade)}${num(s.km) ? ' ' + fmtKm(s).split(' · ')[0] : ''}` : ''}</div>
       <div class="chips">
         <span class="chip ok">Lucro ${eur(L.lucro)} · ${pct(L.margem)}</span>
         ${L.desl ? `<span class="chip">⛽ ${eur(L.desl)}</span>` : ''}
         ${L.abateReal ? `<span class="chip warn">Abate ${eur(L.abateReal)}</span>` : ''}
-        <span class="chip acc">${esc(P[0])} ${eur(L.p1)} · ${esc(P[1])} ${eur(L.p2)}</span>
-      </div></button>`;
-  }).join('') : '<div class="empty">Ainda não há serviços.<br>Carrega no + para adicionar.</div>';
+        ${L.conta ? `<span class="chip acc">${esc(P[0])} ${eur(L.p1)} · ${esc(P[1])} ${eur(L.p2)}</span>` : ''}
+      </div>${htmlContacto(s.telefone)}</div>`;
+  };
+  $('listaServicos').innerHTML = !C.ordem.length ? '<div class="empty">Ainda não há serviços.<br>Carrega no + para adicionar.</div>'
+    : (proximos.length ? `<div class="secao">Próximos (${proximos.length})</div>` + proximos.map(itemServ).join('') : '')
+    + (anteriores.length ? `<div class="secao">Anteriores (${anteriores.length})</div>` + anteriores.map(itemServ).join('') : '');
 
   // Compras
   const lc = [...S.compras].sort((a, b) => (b.data || '').localeCompare(a.data || ''));
   $('listaCompras').innerHTML = lc.length ? lc.map(c => `<button class="item" data-comp="${esc(c.id)}">
       <div class="top"><span class="t">${esc(c.descricao || 'Compra')}</span><span class="amt">${eur(c.total)}</span></div>
-      <div class="m">${dataPT(c.data)}${c.tipo ? ' · ' + esc(c.tipo) : ''}${c.obs ? ' · ' + esc(c.obs) : ''}</div>
+      <div class="m">${dataPT(c.data)}${c.tipo ? ' · ' + esc(c.tipo) : ''}${c.roloId && num(c.quantidade) ? ` · ${num(c.quantidade)} × ${esc((S.config.rolos.find(r => r.id === c.roloId) || {}).nome || 'rolo')}` : ''}${c.obs ? ' · ' + esc(c.obs) : ''}</div>
       <div class="chips"><span class="chip">${esc(P[0])} ${eur(c.p1)}</span><span class="chip">${esc(P[1])} ${eur(c.p2)}</span></div>
     </button>`).join('') : '<div class="empty">Sem compras registadas.<br>Carrega no + para adicionar.</div>';
 
@@ -518,7 +661,8 @@ function irPara(v) {
   window.scrollTo(0, 0);
 }
 $('fab').onclick = () => vista === 'servicos' ? formServico() : formCompra();
-$('listaServicos').onclick = e => { const b = e.target.closest('[data-serv]'); if (b) formServico(S.servicos.find(s => s.id === b.dataset.serv)); };
+$('listaServicos').onclick = e => { if (e.target.closest('[data-link]')) return; const b = e.target.closest('[data-serv]'); if (b) formServico(S.servicos.find(s => s.id === b.dataset.serv)); };
+$('r-prox').onclick = e => { const b = e.target.closest('[data-serv]'); if (b) formServico(S.servicos.find(s => s.id === b.dataset.serv)); };
 $('listaCompras').onclick = e => { const b = e.target.closest('[data-comp]'); if (b) formCompra(S.compras.find(c => c.id === b.dataset.comp)); };
 
 // ── FOLHA (formulário deslizante) ──
@@ -528,16 +672,25 @@ $('sheetBg').onclick = fecharFolha;
 $('sheetFechar').onclick = fecharFolha;
 
 function formServico(s) {
-  const novo = !s || !s.id; s = { data: hoje(), evento: '', recebido: '', fotos: '', roloId: S.config.rolos[0]?.id || '', abater: '', obs: '',
+  const novo = !s || !s.id; s = { data: hoje(), evento: '', recebido: '', fotos: '', roloId: S.config.rolos[0]?.id || '', abater: '', obs: '', estado: 'confirmado', telefone: '',
     localidade: '', carroId: S.config.carros.length === 1 ? S.config.carros[0].id : '', deslocacoes: 1, ...(s || {}) };
   const kmEst = { local: s.localidade || '', km: s.km || 0, min: s.kmMin || null, aprox: !!s.kmAprox, nome: s.kmNome || '' };
   const P = S.config.pessoas;
+  const pagoIni = s.pago == null ? (novo && estadoDe(s) === 'confirmado' ? s.recebido : (novo ? '' : s.recebido)) : s.pago;
   abrirFolha(`<h3>${novo ? 'Novo serviço' : 'Editar serviço'}</h3>
+    <div class="seg" id="fEstado" style="margin-bottom:4px">${Object.entries(ESTADOS).map(([k, v]) => `<button type="button" data-e="${k}" class="${estadoDe(s) === k ? 'on' : ''}">${v}</button>`).join('')}</div>
+    <div class="hint" id="fEstadoHint"></div>
     <div class="two"><div><label>Data</label><input type="date" id="fData" value="${esc(s.data)}"></div>
     <div><label>Rolo</label><select id="fRolo">${S.config.rolos.map(r => `<option value="${esc(r.id)}" ${r.id === s.roloId ? 'selected' : ''}>${esc(r.nome)}</option>`).join('')}</select></div></div>
     <label>Evento / Cliente</label><input id="fEvento" value="${esc(s.evento)}" placeholder="Ex.: Casamento Ana & Rui">
-    <div class="two"><div><label>Recebido (€)</label><input id="fRec" inputmode="decimal" value="${esc(fmtIn(s.recebido))}"></div>
+    <label>Telefone do cliente</label><input id="fTel" type="tel" inputmode="tel" value="${esc(s.telefone)}" placeholder="Ex.: 912 345 678" autocomplete="off">
+    <div id="fTelAcoes"></div>
+    <div class="two"><div><label>Valor do serviço (€)</label><input id="fRec" inputmode="decimal" value="${esc(fmtIn(s.recebido))}"></div>
     <div><label>Nº de fotos</label><input id="fFotos" inputmode="numeric" value="${esc(s.fotos)}"></div></div>
+    <div class="hint" id="fStockHint"></div>
+    <label>Já recebido (€)</label>
+    <div class="kmline"><input id="fPago" inputmode="decimal" value="${esc(fmtIn(pagoIni))}" placeholder="0"><button class="btn sm" type="button" id="fPagoTudo">Tudo</button><button class="btn sm" type="button" id="fPagoNada">Nada</button></div>
+    <div class="hint" id="fPagoHint"></div>
     <label>Localidade do serviço</label>${htmlKm('f', s.localidade)}
     <div class="two"><div><label>Carro</label>${htmlCarros('fCarro', s.carroId)}</div>
     <div><label>Nº de deslocações</label><input id="fDesl" inputmode="numeric" value="${esc(s.deslocacoes || 1)}"></div></div>
@@ -550,7 +703,13 @@ function formServico(s) {
   const prev = () => {
     // simula o cálculo com os valores do formulário
     const dsl = custoDeslocacao(kmValidos(), $('fCarro').value, $('fDesl').value);
-    const tmp = { ...s, id: s.id || '__novo', criado: s.criado || Date.now(), data: $('fData').value, roloId: $('fRolo').value, recebido: num($('fRec').value), fotos: num($('fFotos').value), abater: num($('fAbater').value), custoDesloc: dsl.custo };
+    const tmp = { ...s, id: s.id || '__novo', criado: s.criado || Date.now(), data: $('fData').value, roloId: $('fRolo').value, recebido: num($('fRec').value), fotos: num($('fFotos').value), abater: num($('fAbater').value), custoDesloc: dsl.custo, estado: estadoAtual, pago: num($('fPago').value) };
+    $('fEstadoHint').textContent = estadoAtual === 'orcamento' ? 'Orçamento: ainda não conta nos totais nem no stock. Muda para Confirmado quando o cliente aceitar.' : estadoAtual === 'cancelado' ? 'Cancelado: não conta nos totais.' : '';
+    const falta = r2(tmp.recebido - tmp.pago);
+    $('fPagoHint').textContent = estadoAtual !== 'confirmado' ? '' : falta > 0 ? `Falta receber ${eur(falta)}.` : tmp.recebido ? 'Tudo recebido ✔' : '';
+    const sx = stockRolos().find(x => x.rolo.id === tmp.roloId), jaConta = !novo && ativo(s) && s.roloId === tmp.roloId ? num(s.fotos) : 0;
+    const disp = sx ? sx.restam - (sx.reservadas) + jaConta : 0;
+    $('fStockHint').innerHTML = sx && tmp.fotos && estadoAtual !== 'cancelado' ? (tmp.fotos > disp ? `<span style="color:var(--bad)">⚠️ Só há ${fotosN(Math.max(0, disp))} fotos livres no ${esc(sx.rolo.nome)} (contando os outros eventos marcados).</span>` : `${esc(sx.rolo.nome)}: ${fotosN(disp)} fotos livres → ficam ${fotosN(disp - tmp.fotos)}.`) : '';
     const backup = S.servicos; S.servicos = [...S.servicos.filter(x => x.id !== tmp.id), tmp];
     const C = calcular(); S.servicos = backup;
     const L = C.linhas[tmp.id], faltaAntes = L.faltaDepois + L.abateReal;
@@ -560,12 +719,23 @@ function formServico(s) {
       <div class="row"><span class="k">Custo das fotos</span><span class="v">${eur(L.custo)}</span></div>
       ${kmValidos() ? `<div class="row"><span class="k">Deslocação (${Math.round(dsl.kmTotal)} km${dsl.litros ? ' · ' + dsl.litros.toLocaleString('pt-PT', { maximumFractionDigits: 1 }) + ' L' : ''})</span><span class="v">${dsl.aviso ? `<span style="color:var(--bad)">${esc(dsl.aviso)}</span>` : eur(dsl.custo)}</span></div>` : ''}
       <div class="row"><span class="k">Lucro do serviço</span><span class="v">${eur(L.lucro)} · ${pct(L.margem)}</span></div>
-      <div class="row"><span class="k">Abate real</span><span class="v">${eur(L.abateReal)}</span></div>
+      ${L.conta ? `<div class="row"><span class="k">Abate real</span><span class="v">${eur(L.abateReal)}</span></div>` : ''}
       <div class="row"><span class="k">Fica para dividir</span><span class="v">${eur(L.dividir)}</span></div>
       <div class="row"><span class="k">${esc(P[0])} / ${esc(P[1])}</span><span class="v">${eur(L.p1)} / ${eur(L.p2)}</span></div>`;
   };
+  let estadoAtual = estadoDe(s);
+  $('fEstado').onclick = e => { const b = e.target.closest('[data-e]'); if (!b) return; estadoAtual = b.dataset.e;
+    $('fEstado').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); prev(); };
+  const telAcoes = () => { $('fTelAcoes').innerHTML = htmlContacto($('fTel').value); };
+  $('fTel').oninput = telAcoes; telAcoes();
+  // serviço novo já realizado: por defeito considera-se tudo recebido (até mexeres no campo)
+  let pagoTocado = !novo || s.pago != null;
+  $('fPagoTudo').onclick = () => { pagoTocado = true; $('fPago').value = $('fRec').value; prev(); };
+  $('fPagoNada').onclick = () => { pagoTocado = true; $('fPago').value = '0'; prev(); };
+  const espelhar = () => { if (!pagoTocado && estadoAtual === 'confirmado') $('fPago').value = ($('fData').value || hoje()) <= hoje() ? $('fRec').value : ''; };
   const kmValidos = ligarKm('f', kmEst, () => prev());
-  ['fData', 'fRolo', 'fRec', 'fFotos', 'fAbater', 'fCarro', 'fDesl'].forEach(i => $(i).oninput = prev); prev();
+  ['fData', 'fRolo', 'fRec', 'fFotos', 'fAbater', 'fCarro', 'fDesl'].forEach(i => $(i).oninput = () => { espelhar(); prev(); });
+  $('fPago').oninput = () => { pagoTocado = true; prev(); }; prev();
   $('fOk').onclick = async () => {
     const rolo = S.config.rolos.find(r => r.id === $('fRolo').value);
     const reg = { id: s.id || uid(), criado: s.criado || Date.now(), data: $('fData').value || hoje(), evento: $('fEvento').value.trim(),
@@ -574,6 +744,8 @@ function formServico(s) {
     const km = kmValidos(), dsl = custoDeslocacao(km, $('fCarro').value, $('fDesl').value);
     Object.assign(reg, { localidade: $('fLocal').value.trim(), km, kmMin: km ? kmEst.min : null, kmAprox: km ? kmEst.aprox : false, kmNome: km ? kmEst.nome : '',
       carroId: $('fCarro').value, carroNome: dsl.carro?.nome || '', deslocacoes: dsl.n, custoDesloc: r2(dsl.custo) });
+    Object.assign(reg, { estado: estadoAtual, pago: num($('fPago').value), telefone: $('fTel').value.trim() });
+    if (reg.pago > reg.recebido && reg.recebido && !confirm('O valor já recebido é maior do que o valor do serviço. Guardar assim?')) return;
     if (reg.localidade && !km && !confirm('Ainda não calculaste os km desta localidade. Guardar sem custo de deslocação?')) return;
     if (!reg.recebido && !reg.fotos) return toast('Preenche o valor recebido ou o nº de fotos', 'erro');
     await guardar('servicos', reg); fecharFolha(); toast('Serviço guardado');
@@ -599,7 +771,7 @@ function simulador() {
     <div id="sSug"></div>
     <label>Preço que vais pedir (€)</label><input id="sPreco" inputmode="decimal" value="${esc(v.preco)}" placeholder="opcional">
     <div class="preview" id="sLucro" style="display:none"></div>
-    <div class="actions"><button class="btn pri" id="sCriar">Criar serviço com estes dados</button></div>`);
+    <div class="actions"><button class="btn pri" id="sCriar">Guardar como orçamento</button></div>`);
   const consDoCarro = () => { const c = S.config.carros.find(c => c.id === $('sCarro').value); $('sCons').value = c && num(c.consumo) ? String(c.consumo).replace('.', ',') : ''; };
   consDoCarro();
   const kmValidos = ligarKm('s', simUltimo, () => calc());
@@ -633,7 +805,7 @@ function simulador() {
   $('sCriar').onclick = () => {
     const r = calc(); fecharFolha();
     setTimeout(() => formServico({ localidade: $('sLocal')?.value || simUltimo.local, km: r.km, kmMin: simUltimo.min, kmAprox: simUltimo.aprox, kmNome: simUltimo.nome,
-      carroId: $('sCarro')?.value || simVals.carroId, deslocacoes: r.n, fotos: r.fotos || '', roloId: simVals.roloId, recebido: r.preco ? r2(r.preco) : '' }), 250);
+      carroId: $('sCarro')?.value || simVals.carroId, deslocacoes: r.n, fotos: r.fotos || '', roloId: simVals.roloId, recebido: r.preco ? r2(r.preco) : '', estado: 'orcamento', pago: 0 }), 250);
   };
 }
 $('btnSim').onclick = simulador;
@@ -644,6 +816,9 @@ function formCompra(c) {
   abrirFolha(`<h3>${novo ? 'Nova compra' : 'Editar compra'}</h3>
     <div class="two"><div><label>Data</label><input type="date" id="cData" value="${esc(c.data)}"></div>
     <div><label>Tipo</label><select id="cTipo">${tipos.map(t => `<option ${t === c.tipo ? 'selected' : ''}>${t}</option>`).join('')}</select></div></div>
+    <div id="cRoloBox"><div class="two"><div><label>Que rolo?</label><select id="cRolo">${S.config.rolos.map(r => `<option value="${esc(r.id)}" ${r.id === c.roloId ? 'selected' : ''}>${esc(r.nome)}</option>`).join('')}</select></div>
+    <div><label>Quantos rolos?</label><input id="cQtd" inputmode="numeric" value="${esc(c.quantidade ?? 1)}"></div></div>
+    <div class="hint">Soma ao stock de fotos desse rolo.</div></div>
     <label>Descrição</label><input id="cDesc" value="${esc(c.descricao)}" placeholder="Ex.: Rolo 10x15">
     <label>Valor total (€)</label><input id="cTotal" inputmode="decimal" value="${esc(fmtIn(c.total))}">
     <div class="seg" style="margin-top:12px"><button id="cMeias" type="button">A meias</button><button id="cSo1" type="button">Só ${esc(P[0])}</button><button id="cSo2" type="button">Só ${esc(P[1])}</button></div>
@@ -652,6 +827,9 @@ function formCompra(c) {
     <div class="hint" id="cAviso"></div>
     <label>Observação</label><input id="cObs" value="${esc(c.obs)}">
     <div class="actions">${novo ? '' : '<button class="btn del" id="cDel">Apagar</button>'}<button class="btn pri" id="cOk">Guardar</button></div>`);
+  const roloBox = () => { const eRolo = $('cTipo').value === 'Rolo'; $('cRoloBox').style.display = eRolo ? 'block' : 'none';
+    if (eRolo && !$('cDesc').value.trim()) { const r = S.config.rolos.find(r => r.id === $('cRolo').value); if (r) $('cDesc').placeholder = r.nome; } };
+  $('cTipo').onchange = roloBox; $('cRolo').onchange = roloBox; roloBox();
   const aviso = () => { const d = r2(num($('cTotal').value) - num($('cP1').value) - num($('cP2').value)); $('cAviso').textContent = d ? `Atenção: a soma das duas é diferente do total (diferença ${eur(d)}).` : ''; };
   const t = () => num($('cTotal').value);
   $('cMeias').onclick = () => { $('cP1').value = fmtIn(r2(t() / 2)); $('cP2').value = fmtIn(r2(t() - r2(t() / 2))); aviso(); };
@@ -661,6 +839,8 @@ function formCompra(c) {
   $('cOk').onclick = async () => {
     const reg = { id: c.id || uid(), data: $('cData').value || hoje(), tipo: $('cTipo').value, descricao: $('cDesc').value.trim(),
       total: num($('cTotal').value), p1: num($('cP1').value), p2: num($('cP2').value), obs: $('cObs').value.trim() };
+    if (reg.tipo === 'Rolo') { reg.roloId = $('cRolo').value; reg.quantidade = Math.max(0, Math.round(num($('cQtd').value))); if (!reg.descricao) reg.descricao = (S.config.rolos.find(r => r.id === reg.roloId) || {}).nome || 'Rolo'; }
+    else { reg.roloId = ''; reg.quantidade = 0; }
     if (!reg.total) return toast('Preenche o valor total', 'erro');
     if (!reg.p1 && !reg.p2) { reg.p1 = r2(reg.total / 2); reg.p2 = r2(reg.total - reg.p1); }
     await guardar('compras', reg); fecharFolha(); toast('Compra guardada');
@@ -679,13 +859,15 @@ function desenharCfg() {
   $('cfgRolos').innerHTML = c.rolos.map((r, i) => `<div class="rolo-bloco">
     <input data-r="${i}" data-f="nome" value="${esc(r.nome)}" placeholder="Nome do rolo">
     <div class="edit-line rolo"><label class="mini">Preço (€)<input data-r="${i}" data-f="preco" inputmode="decimal" value="${esc(fmtIn(r.preco))}"></label>
-    <label class="mini">Fotos por rolo<input data-r="${i}" data-f="fotos" inputmode="numeric" value="${esc(r.fotos)}"></label><button class="x" data-rdel="${i}" aria-label="Remover rolo">×</button></div>
+    <label class="mini">Fotos/rolo<input data-r="${i}" data-f="fotos" inputmode="numeric" value="${esc(r.fotos)}"></label>
+    <label class="mini">Rolos no início<input data-r="${i}" data-f="iniciais" inputmode="numeric" value="${esc(r.iniciais ?? 1)}"></label><button class="x" data-rdel="${i}" aria-label="Remover rolo">×</button></div>
     <div class="hint">Custo por foto: ${eur4(custoFoto({ preco: num(r.preco), fotos: num(r.fotos) }))}</div></div>`).join('');
   $('cfgInv').innerHTML = c.investimento.map((it, i) => `<div class="edit-line">
     <input data-i="${i}" data-f="nome" value="${esc(it.nome)}"><input data-i="${i}" data-f="valor" inputmode="decimal" value="${esc(fmtIn(it.valor))}">
     <button class="x" data-idel="${i}">×</button></div>`).join('');
   $('cfgInvTotal').textContent = eur(c.investimento.reduce((a, i) => a + num(i.valor), 0));
   $('cfgP1').value = c.pessoas[0]; $('cfgP2').value = c.pessoas[1];
+  $('cfgAviso').value = c.avisoFotos;
   $('cfgBase').value = c.base; $('cfgComb').value = c.precoComb ? String(c.precoComb).replace('.', ',') : '';
   $('cfgCarros').innerHTML = c.carros.length ? c.carros.map((v, i) => `<div class="edit-line carro">
     <input data-c="${i}" data-f="nome" value="${esc(v.nome)}" placeholder="Nome do carro"><input data-c="${i}" data-f="consumo" inputmode="decimal" value="${v.consumo ? String(v.consumo).replace('.', ',') : ''}" placeholder="5,5">
@@ -699,8 +881,9 @@ $('cfgRolos').onclick = e => { const i = e.target.dataset.rdel; if (i == null) r
   const r = cfgRascunho.rolos[i]; if (S.servicos.some(s => s.roloId === r.id) && !confirm(`O ${r.nome} está usado em serviços. Esses serviços mantêm o custo por foto que tinham. Remover?`)) return;
   cfgRascunho.rolos.splice(i, 1); cfgSujo = true; desenharCfg(); };
 $('cfgInv').onclick = e => { const i = e.target.dataset.idel; if (i == null) return; cfgRascunho.investimento.splice(i, 1); cfgSujo = true; desenharCfg(); };
-$('addRolo').onclick = () => { cfgRascunho.rolos.push({ id: uid(), nome: 'Novo rolo', preco: 0, fotos: 1400 }); cfgSujo = true; desenharCfg(); };
+$('addRolo').onclick = () => { cfgRascunho.rolos.push({ id: uid(), nome: 'Novo rolo', preco: 0, fotos: 1400, iniciais: 0 }); cfgSujo = true; desenharCfg(); };
 $('addInv').onclick = () => { cfgRascunho.investimento.push({ id: uid(), nome: '', valor: 0 }); cfgSujo = true; desenharCfg(); };
+$('cfgAviso').oninput = e => { cfgRascunho.avisoFotos = Math.round(num(e.target.value)); cfgSujo = true; };
 $('cfgBase').oninput = e => { cfgRascunho.base = e.target.value; cfgSujo = true; };
 $('cfgComb').oninput = e => { cfgRascunho.precoComb = num(e.target.value); cfgSujo = true; };
 $('cfgCarros').oninput = e => { const el = e.target; if (el.dataset.c == null) return; cfgSujo = true; cfgRascunho.carros[el.dataset.c][el.dataset.f] = el.dataset.f === 'nome' ? el.value : num(el.value); };
@@ -733,9 +916,9 @@ $('fileImport').onchange = async e => {
 };
 $('btnCsv').onclick = () => {
   const C = calcular(), P = S.config.pessoas, f = n => (Number(n) || 0).toFixed(2).replace('.', ',');
-  const cab = ['Data', 'Evento / Cliente', 'Recebido (€)', 'Nº fotos', 'Rolo', 'Custo/foto (€)', 'Custo fotos (€)', 'Localidade', 'Km (ida)', 'Carro', 'Deslocações', 'Custo deslocação (€)', 'Lucro do serviço (€)', 'Margem', 'Quero abater (€)', 'Abate real (€)', 'Fica para dividir (€)', P[0] + ' (€)', P[1] + ' (€)'];
-  const linhas = C.ordem.map(s => { const L = C.linhas[s.id]; return [dataPT(s.data), s.evento, f(s.recebido), s.fotos, L.rolo?.nome || s.roloNome || '', (L.cf).toFixed(4).replace('.', ','), f(L.custo), s.localidade || '', s.km ? String(s.km).replace('.', ',') : '', s.carroNome || '', s.km ? (s.deslocacoes || 1) : '', f(L.desl), f(L.lucro), pct(L.margem), f(s.abater), f(L.abateReal), f(L.dividir), f(L.p1), f(L.p2)]; });
-  linhas.push(['TOTAIS', '', f(C.T.recebido), C.T.fotos, '', '', f(C.T.custo), '', '', '', '', f(C.T.desl), f(C.T.lucro), pct(C.T.margem), '', f(C.T.abate), f(C.T.dividir), f(C.T.p1), f(C.T.p2)]);
+  const cab = ['Estado', 'Data', 'Evento / Cliente', 'Telefone', 'Recebido (€)', 'Já recebido (€)', 'Falta receber (€)', 'Nº fotos', 'Rolo', 'Custo/foto (€)', 'Custo fotos (€)', 'Localidade', 'Km (ida)', 'Carro', 'Deslocações', 'Custo deslocação (€)', 'Lucro do serviço (€)', 'Margem', 'Quero abater (€)', 'Abate real (€)', 'Fica para dividir (€)', P[0] + ' (€)', P[1] + ' (€)'];
+  const linhas = C.ordem.map(s => { const L = C.linhas[s.id]; return [etiqueta(s).txt, dataPT(s.data), s.evento, s.telefone || '', f(s.recebido), f(estadoDe(s) === 'confirmado' ? pagoDe(s) : 0), f(L.receber), s.fotos, L.rolo?.nome || s.roloNome || '', (L.cf).toFixed(4).replace('.', ','), f(L.custo), s.localidade || '', s.km ? String(s.km).replace('.', ',') : '', s.carroNome || '', s.km ? (s.deslocacoes || 1) : '', f(L.desl), f(L.lucro), pct(L.margem), f(s.abater), f(L.abateReal), f(L.dividir), f(L.p1), f(L.p2)]; });
+  linhas.push(['TOTAIS (só confirmados)', '', '', '', f(C.T.recebido), '', f(C.T.receber), C.T.fotos, '', '', f(C.T.custo), '', '', '', '', f(C.T.desl), f(C.T.lucro), pct(C.T.margem), '', f(C.T.abate), f(C.T.dividir), f(C.T.p1), f(C.T.p2)]);
   const csv = '﻿' + [cab, ...linhas].map(l => l.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(';')).join('\r\n');
   descarregar(`memorybox-servicos-${hoje()}.csv`, csv, 'text/csv;charset=utf-8');
 };
@@ -747,8 +930,8 @@ const fmtV = (v, f) => (v === '' || v == null) ? '—' : (f ? f(v) : String(v));
 function camposDe(col) {
   const P = S.config.pessoas;
   return col === 'servicos'
-    ? [['data', 'Data', dataPT], ['evento', 'Evento'], ['recebido', 'Recebido', eur], ['fotos', 'Nº fotos'], ['roloId', 'Rolo', id => (S.config.rolos.find(r => r.id === id) || {}).nome || id], ['localidade', 'Localidade'], ['km', 'Km (ida)', v => String(v).replace('.', ',') + ' km'], ['carroNome', 'Carro'], ['deslocacoes', 'Deslocações'], ['custoDesloc', 'Custo deslocação', eur], ['abater', 'Quero abater', eur], ['obs', 'Observação']]
-    : [['data', 'Data', dataPT], ['tipo', 'Tipo'], ['descricao', 'Descrição'], ['total', 'Valor total', eur], ['p1', P[0], eur], ['p2', P[1], eur], ['obs', 'Observação']];
+    ? [['estado', 'Estado', v => ESTADOS[v] || v], ['data', 'Data', dataPT], ['evento', 'Evento'], ['telefone', 'Telefone'], ['pago', 'Já recebido', eur], ['recebido', 'Recebido', eur], ['fotos', 'Nº fotos'], ['roloId', 'Rolo', id => (S.config.rolos.find(r => r.id === id) || {}).nome || id], ['localidade', 'Localidade'], ['km', 'Km (ida)', v => String(v).replace('.', ',') + ' km'], ['carroNome', 'Carro'], ['deslocacoes', 'Deslocações'], ['custoDesloc', 'Custo deslocação', eur], ['abater', 'Quero abater', eur], ['obs', 'Observação']]
+    : [['data', 'Data', dataPT], ['tipo', 'Tipo'], ['descricao', 'Descrição'], ['total', 'Valor total', eur], ['quantidade', 'Nº de rolos'], ['p1', P[0], eur], ['p2', P[1], eur], ['obs', 'Observação']];
 }
 function diferencas(col, antes, depois) {
   const out = [];
@@ -769,7 +952,8 @@ function diferencasConfig(a, d) {
       for (const [k, l, f] of [['nome', 'nome'], ...campos]) if (String(o[k] ?? '') !== String(n[k] ?? '')) out.push(`${nomeTipo} ${o.nome || '—'} — ${l}: ${fmtV(o[k], f)} → ${fmtV(n[k], f)}`); }
     for (const o of x) if (!y.find(i => i.id === o.id)) out.push(`${nomeTipo} removido: ${o.nome || '—'}`);
   };
-  lista(a.rolos, d.rolos, 'Rolo', [['preco', 'preço', eur], ['fotos', 'fotos/rolo']]);
+  lista(a.rolos, d.rolos, 'Rolo', [['preco', 'preço', eur], ['fotos', 'fotos/rolo'], ['iniciais', 'rolos no início']]);
+  if (num(a.avisoFotos ?? 200) !== num(d.avisoFotos ?? 200)) out.push(`Aviso de stock: ${a.avisoFotos ?? 200} → ${d.avisoFotos} fotos`);
   lista(a.investimento, d.investimento, 'Investimento', [['valor', 'valor', eur]]);
   normCfg(a); normCfg(d);
   if (a.base !== d.base) out.push(`Ponto de partida: ${a.base} → ${d.base}`);
