@@ -225,7 +225,14 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-c
 //  Para partilhar os dados entre as duas, cola aqui a config do Firebase
 //  (ver LEIA-ME.md) e os emails Google autorizados.
 // ═══════════════════════════════════════════════════════════════
-const FIREBASE_CONFIG = null;
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDKHvW6L-Pp-fUE9c6YwazAe1p_B6WD7gE",
+  authDomain: "memorybox-7c993.firebaseapp.com",
+  projectId: "memorybox-7c993",
+  storageBucket: "memorybox-7c993.firebasestorage.app",
+  messagingSenderId: "304766011530",
+  appId: "1:304766011530:web:95bf72bc432d33bd3d0573"
+};
 // Exemplo:
 // const FIREBASE_CONFIG = { apiKey:"...", authDomain:"memorybox-xxxx.firebaseapp.com", projectId:"memorybox-xxxx",
 //   storageBucket:"...", messagingSenderId:"...", appId:"..." };
@@ -578,8 +585,12 @@ async function iniciarNuvem() {
     // Primeira vez: cria a configuração e o serviço da folha
     const snap = await F.getDoc(raiz).catch(e => { erroNuvem(e); return null; });
     if (snap && !snap.exists()) {
-      await F.setDoc(raiz, { config: DADOS_INICIAIS.config });
-      for (const s of DADOS_INICIAIS.servicos) await F.setDoc(F.doc(db, 'memorybox', 'v1', 'servicos', s.id), s);
+      // Usa os dados que já estavam guardados neste telemóvel (se houver); senão, os da folha
+      const base = lerLocal() || DADOS_INICIAIS;
+      await F.setDoc(raiz, { config: base.config });
+      for (const s of base.servicos) await F.setDoc(F.doc(db, 'memorybox', 'v1', 'servicos', s.id), s);
+      for (const c of base.compras || []) await F.setDoc(F.doc(db, 'memorybox', 'v1', 'compras', c.id), c);
+      if (lerLocal()) toast('Dados deste telemóvel copiados para a nuvem');
     }
     desligar.push(F.onSnapshot(raiz, d => { if (d.exists() && d.data().config) { S.config = d.data().config; render(); } }, erroNuvem));
     for (const col of ['servicos', 'compras'])
