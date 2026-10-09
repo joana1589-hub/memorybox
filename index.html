@@ -281,7 +281,6 @@ const FIREBASE_CONFIG = {
 // Emails que podem entrar e a quem pertencem (0 = 1.ª sócia, 1 = 2.ª sócia, como em Configuração → Sócias)
 const EMAILS = {
   'joana1589@gmail.com': 0,
-  'elineas_@hotmail.com': 1,
   'elianasantosphotography@gmail.com': 1
 };
 const pessoaDoEmail = e => { const i = EMAILS[(e || '').toLowerCase()]; return i == null ? -1 : i; };

@@ -35,8 +35,7 @@ Para partilhar os dados:
    `const FIREBASE_CONFIG = { apiKey:"...", authDomain:"...", projectId:"...", ... };`
 
 Emails autorizados (em `index.html` → `EMAILS` e em `firestore.rules`):
-`joana1589@gmail.com` (Joana), `elineas_@hotmail.com` e `elianasantosphotography@gmail.com` (Eliana).
-O login é feito com conta Google — o email da Eliana tem de estar associado a uma conta Google.
+`joana1589@gmail.com` (Joana), `elianasantosphotography@gmail.com` (Eliana).
 
 Na primeira vez que alguém entrar, a app cria os rolos, o investimento e o serviço da folha (Junta Casal Comba).
 
