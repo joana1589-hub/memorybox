@@ -9,6 +9,8 @@ Mesma lógica da folha `MemoryBox_FINAL_CORRIGIDO_LOGICA.xlsx`.
 - **Quero abater** = quanto desse serviço vai para recuperar o investimento inicial.
   O **abate real** é limitado ao que ainda falta recuperar (os serviços são contados por ordem de data).
 - **Fica para dividir** = Recebido − Abate real, dividido 50% / 50%.
+- **Deslocações**: em cada serviço escreves a localidade e a app calcula os km desde Casal Comba (OpenStreetMap/OSRM, gratuito) e o custo do combustível (km × 2 × nº de deslocações × média do carro × preço do combustível). Esse custo entra no lucro do serviço.
+- **Simulador de orçamento** (separador Serviços): localidade, carro, nº de fotos e margem desejada → custo total e preço sugerido.
 - **Compras**: novos rolos e outras despesas, com quanto pagou cada uma (botão *A meias*).
 
 ## 1. Ativar o GitHub Pages

@@ -97,6 +97,15 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-c
 .seg{display:flex;background:var(--line);border-radius:12px;padding:3px;margin-bottom:12px}
 .seg button{flex:1;border:0;background:none;padding:8px;border-radius:10px;font-weight:600;color:var(--muted);cursor:pointer}
 .seg button.on{background:#fff;color:var(--ink)}
+.kmline{display:flex;gap:8px}.kmline input{flex:1}
+.kminfo{font-size:13px;margin-top:6px;color:var(--muted)}.kminfo a{color:var(--accent);font-weight:600;text-decoration:none}
+.kminfo.ok{color:var(--ok)}.kminfo.erro{color:var(--bad)}
+.edit-line.carro{grid-template-columns:1fr 110px 34px}
+.sugest{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.sugest div{background:var(--bg);border-radius:12px;padding:8px;text-align:center;font-size:12.5px;color:var(--muted)}
+.sugest b{display:block;font-size:16px;color:var(--ink)}
+.big-res{background:var(--brand);color:#fff;border-radius:14px;padding:14px;margin-top:12px}
+.big-res .lbl{font-size:13px;opacity:.8}.big-res .val{font-size:28px;font-weight:800}
 .dia{font-size:13px;font-weight:700;color:var(--muted);margin:16px 4px 8px}
 .mov{background:var(--card);border-radius:14px;padding:12px 14px;margin-bottom:8px}
 .mov .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
@@ -139,6 +148,8 @@ nav button{font-size:11px}
       <div class="stat"><div class="lbl">Total de fotos</div><div class="val" id="r-fotos"></div></div>
       <div class="stat"><div class="lbl">Custo das fotos</div><div class="val" id="r-custo"></div></div>
       <div class="stat"><div class="lbl">Margem</div><div class="val" id="r-margem"></div></div>
+      <div class="stat"><div class="lbl">Deslocações</div><div class="val" id="r-desl"></div></div>
+      <div class="stat"><div class="lbl">Km percorridos</div><div class="val" id="r-km"></div></div>
     </div>
 
     <h2>Investimento inicial</h2>
@@ -158,6 +169,7 @@ nav button{font-size:11px}
 
   <!-- SERVIÇOS -->
   <section class="view" id="v-servicos">
+    <button class="btn dark block" id="btnSim" style="margin-bottom:6px">🧮 Simulador de orçamento</button>
     <h2>Serviços</h2>
     <div id="listaServicos"></div>
     <div class="card how">
@@ -198,6 +210,16 @@ nav button{font-size:11px}
       <div id="cfgInv"></div>
       <button class="btn sm" id="addInv">+ Adicionar item</button>
       <div class="row" style="margin-top:8px"><span class="k">Total</span><span class="v" id="cfgInvTotal"></span></div>
+    </div>
+
+    <h2>Deslocações</h2>
+    <div class="card">
+      <label style="margin-top:0">Ponto de partida</label><input id="cfgBase" placeholder="Casal Comba, Mealhada">
+      <label>Preço do combustível (€/L)</label><input id="cfgComb" inputmode="decimal" placeholder="Ex.: 1,65">
+      <div class="small-head" style="grid-template-columns:1fr 110px 34px;margin-top:14px"><span>Carro</span><span>Média (L/100km)</span><span></span></div>
+      <div id="cfgCarros"></div>
+      <button class="btn sm" id="addCarro">+ Adicionar carro</button>
+      <div class="hint">A média é o consumo do carro em litros aos 100 km (ex.: 5,5).</div>
     </div>
 
     <h2>Sócias</h2>
@@ -262,6 +284,9 @@ const EMAILS_PERMITIDOS = ['joana1589@gmail.com', 'elineas_@hotmail.com'];
 const DADOS_INICIAIS = {
   config: {
     pessoas: ['Joana', 'Eliana'],
+    base: 'Casal Comba, Mealhada',
+    precoComb: 0,
+    carros: [],
     investimentoPor: 0,
     rolos: [
       { id: 'r1', nome: 'Rolo 10x15', preco: 128, fotos: 1400 },
@@ -302,6 +327,75 @@ const hoje = () => { const d = new Date(); return new Date(d - d.getTimezoneOffs
 const dataPT = iso => iso ? iso.split('-').reverse().join('/') : '—';
 function toast(msg, tipo) { const t = $('toast'); t.textContent = msg; t.className = 'toast show' + (tipo ? ' ' + tipo : ''); clearTimeout(t._h); t._h = setTimeout(() => t.className = 'toast', 2600); }
 
+// ── DESLOCAÇÕES / MAPAS ──
+// Mapas gratuitos (os mesmos da LenhaPro): OpenStreetMap (Nominatim) para encontrar a localidade
+// e OSRM para os km de carro. O Google Maps abre-se para ver o caminho.
+const BASE_DEFAULT = 'Casal Comba, Mealhada';
+function normCfg(c) { c.base = c.base || BASE_DEFAULT; c.carros = c.carros || []; c.precoComb = num(c.precoComb); return c; }
+const comPais = t => /portugal/i.test(t) ? t : t + ', Portugal';
+const urlRota = dest => `https://www.google.com/maps/dir/?api=1&travelmode=driving&origin=${encodeURIComponent(comPais(S.config.base))}&destination=${encodeURIComponent(comPais(dest))}`;
+const geoCache = {};
+async function geocodificar(q) {
+  if (q in geoCache) return geoCache[q];
+  const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=pt&accept-language=pt&q=${encodeURIComponent(q)}`);
+  if (!r.ok) throw new Error('geo ' + r.status);
+  const j = await r.json(); const res = j[0] ? { lat: +j[0].lat, lon: +j[0].lon, nome: j[0].display_name } : null;
+  return geoCache[q] = res;
+}
+const haversineKm = (a, b) => { const R = 6371, d = x => x * Math.PI / 180; const h = Math.sin(d(b.lat - a.lat) / 2) ** 2 + Math.cos(d(a.lat)) * Math.cos(d(b.lat)) * Math.sin(d(b.lon - a.lon) / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); };
+// km de ida desde o ponto de partida até à localidade
+async function kmAte(local) {
+  if (!navigator.onLine) throw new Error('offline');
+  const base = await geocodificar(comPais(S.config.base));
+  if (!base) throw new Error('base');
+  const g = await geocodificar(comPais(local));
+  if (!g) return null;
+  try {
+    const r = await fetch(`https://router.project-osrm.org/route/v1/driving/${base.lon},${base.lat};${g.lon},${g.lat}?overview=false`);
+    const j = await r.json(); if (j.code !== 'Ok' || !j.routes?.[0]) throw 0;
+    return { km: Math.round(j.routes[0].distance / 100) / 10, min: Math.round(j.routes[0].duration / 60), aprox: false, nome: g.nome };
+  } catch { return { km: Math.round(haversineKm(base, g) * 13) / 10, min: null, aprox: true, nome: g.nome }; }   // sem rota: linha reta × 1,3
+}
+// custo de combustível: ida e volta × nº de deslocações
+function custoDeslocacao(km, carroId, deslocacoes) {
+  const carro = S.config.carros.find(c => c.id === carroId), n = Math.max(1, Math.round(num(deslocacoes)) || 1);
+  const kmTotal = num(km) * 2 * n;
+  if (!num(km) || !carro) return { kmTotal: carro ? kmTotal : 0, litros: 0, custo: 0, carro, n, aviso: !num(km) ? '' : 'Escolhe o carro' };
+  const litros = kmTotal * num(carro.consumo) / 100, custo = litros * S.config.precoComb;
+  const aviso = !num(carro.consumo) ? `Falta a média do ${carro.nome} (Configuração)` : !S.config.precoComb ? 'Falta o preço do combustível (Configuração)' : '';
+  return { kmTotal, litros, custo, carro, n, aviso };
+}
+const fmtKm = d => d && num(d.km) ? `${d.aprox ? '≈ ' : ''}${num(d.km).toLocaleString('pt-PT', { maximumFractionDigits: 1 })} km${d.min ? ` · ${d.min} min` : ''}` : '';
+// bloco "localidade + calcular km" reutilizado no serviço e no simulador
+function ligarKm(prefixo, estado, aoMudar) {
+  const inp = $(prefixo + 'Local'), btn = $(prefixo + 'KmBtn'), info = $(prefixo + 'KmInfo');
+  const mostrar = () => {
+    const t = inp.value.trim();
+    if (!t) { info.className = 'kminfo'; info.innerHTML = 'Sem localidade — sem custo de deslocação.'; return; }
+    if (estado.local === t && num(estado.km)) {
+      info.className = 'kminfo ok';
+      info.innerHTML = `🚗 <b>${fmtKm(estado)}</b> desde ${esc(S.config.base)} (só ida) · <a href="${esc(urlRota(t))}" target="_blank" rel="noopener">Ver no Google Maps</a>${estado.nome ? `<br><span style="color:var(--muted)">${esc(estado.nome)}</span>` : ''}`;
+    } else { info.className = 'kminfo'; info.innerHTML = 'Carrega em <b>Calcular km</b>.'; }
+  };
+  const calcularKm = async () => {
+    const t = inp.value.trim(); if (!t) return toast('Escreve a localidade', 'erro');
+    btn.disabled = true; info.className = 'kminfo'; info.textContent = '⏳ A calcular os km…';
+    try {
+      const d = await kmAte(t);
+      if (!d) { info.className = 'kminfo erro'; info.innerHTML = `Não encontrei "${esc(t)}" no mapa. Experimenta "localidade, concelho". · <a href="${esc(urlRota(t))}" target="_blank" rel="noopener">Ver no Google Maps</a>`; Object.assign(estado, { local: '', km: 0 }); }
+      else { Object.assign(estado, d, { local: t }); mostrar(); }
+    } catch (e) { info.className = 'kminfo erro'; info.innerHTML = (e.message === 'offline' ? 'Sem rede — não consigo calcular os km.' : e.message === 'base' ? `Não encontrei o ponto de partida "${esc(S.config.base)}".` : 'Erro ao calcular os km.') + ` · <a href="${esc(urlRota(t))}" target="_blank" rel="noopener">Ver no Google Maps</a>`; }
+    btn.disabled = false; aoMudar();
+  };
+  btn.onclick = calcularKm;
+  inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); calcularKm(); } };
+  inp.oninput = () => { mostrar(); aoMudar(); };
+  mostrar();
+  return () => inp.value.trim() && estado.local === inp.value.trim() ? num(estado.km) : 0;   // km válidos
+}
+const htmlKm = (prefixo, local) => `<div class="kmline"><input id="${prefixo}Local" value="${esc(local || '')}" placeholder="Ex.: Anadia, Aveiro" autocomplete="off"><button class="btn sm dark" type="button" id="${prefixo}KmBtn">Calcular km</button></div><div class="kminfo" id="${prefixo}KmInfo"></div>`;
+const htmlCarros = (id, sel) => `<select id="${id}"><option value="">— escolher —</option>${S.config.carros.map(c => `<option value="${esc(c.id)}" ${c.id === sel ? 'selected' : ''}>${esc(c.nome)}${num(c.consumo) ? ` (${String(c.consumo).replace('.', ',')} L)` : ''}</option>`).join('')}</select>`;
+
 // ── CÁLCULOS (mesma lógica da folha) ──
 function custoFoto(rolo) { return rolo && rolo.fotos > 0 ? rolo.preco / rolo.fotos : 0; }
 function calcular() {
@@ -311,20 +405,21 @@ function calcular() {
   const ordem = [...S.servicos].sort((a, b) => (a.data || '').localeCompare(b.data || '') || (a.criado || 0) - (b.criado || 0));
   let falta = investimento;
   const linhas = {};
-  const T = { recebido: 0, fotos: 0, custo: 0, lucro: 0, abate: 0, dividir: 0, p1: 0, p2: 0 };
+  const T = { recebido: 0, fotos: 0, custo: 0, desl: 0, km: 0, lucro: 0, abate: 0, dividir: 0, p1: 0, p2: 0 };
   for (const s of ordem) {
     const rolo = cfg.rolos.find(r => r.id === s.roloId);
     const cf = rolo ? custoFoto(rolo) : num(s.custoFotoGuardado);
     const recebido = num(s.recebido), fotos = num(s.fotos);
     const custo = fotos * cf;
-    const lucro = recebido - custo;
+    const desl = num(s.custoDesloc);
+    const lucro = recebido - custo - desl;
     const margem = recebido ? lucro / recebido : 0;
     const abateReal = Math.max(0, Math.min(num(s.abater), r2(falta), recebido));
     falta = r2(falta - abateReal);
     const dividir = recebido - abateReal;
-    const L = { rolo, cf, custo, lucro, margem, abateReal, dividir, p1: dividir / 2, p2: dividir / 2, faltaDepois: falta };
+    const L = { rolo, cf, custo, desl, lucro, margem, abateReal, dividir, p1: dividir / 2, p2: dividir / 2, faltaDepois: falta };
     linhas[s.id] = L;
-    T.recebido += recebido; T.fotos += fotos; T.custo += custo; T.lucro += lucro;
+    T.recebido += recebido; T.fotos += fotos; T.custo += custo; T.desl += desl; T.km += num(s.km) * 2 * (num(s.deslocacoes) || 1) * (s.km ? 1 : 0); T.lucro += lucro;
     T.abate += abateReal; T.dividir += dividir; T.p1 += L.p1; T.p2 += L.p2;
   }
   T.margem = T.recebido ? T.lucro / T.recebido : 0;
@@ -334,6 +429,7 @@ function calcular() {
 
 // ── DESENHAR ──
 function render() {
+  normCfg(S.config);
   const C = calcular(), P = S.config.pessoas, invPor = P[S.config.investimentoPor] || P[0];
   // Resumo
   $('r-lucro').textContent = eur(C.T.lucro);
@@ -342,6 +438,8 @@ function render() {
   $('r-fotos').textContent = C.T.fotos.toLocaleString('pt-PT');
   $('r-custo').textContent = eur(C.T.custo);
   $('r-margem').textContent = pct(C.T.margem);
+  $('r-desl').textContent = eur(C.T.desl);
+  $('r-km').textContent = Math.round(C.T.km).toLocaleString('pt-PT') + ' km';
   $('r-inv-lbl').textContent = `Recuperado de ${eur(C.investimento)} (pago pela ${invPor})`;
   $('r-recuperado').textContent = eur(C.recuperado);
   $('r-bar').style.width = (C.investimento ? Math.min(100, C.recuperado / C.investimento * 100) : 0) + '%';
@@ -362,9 +460,10 @@ function render() {
     const L = C.linhas[s.id];
     return `<button class="item" data-serv="${esc(s.id)}">
       <div class="top"><span class="t">${esc(s.evento || 'Sem nome')}</span><span class="amt">${eur(s.recebido)}</span></div>
-      <div class="m">${dataPT(s.data)} · ${num(s.fotos).toLocaleString('pt-PT')} fotos · ${esc(L.rolo ? L.rolo.nome : (s.roloNome || 'sem rolo'))}</div>
+      <div class="m">${dataPT(s.data)} · ${num(s.fotos).toLocaleString('pt-PT')} fotos · ${esc(L.rolo ? L.rolo.nome : (s.roloNome || 'sem rolo'))}${s.localidade ? ` · 📍 ${esc(s.localidade)}${num(s.km) ? ' ' + fmtKm(s).split(' · ')[0] : ''}` : ''}</div>
       <div class="chips">
         <span class="chip ok">Lucro ${eur(L.lucro)} · ${pct(L.margem)}</span>
+        ${L.desl ? `<span class="chip">⛽ ${eur(L.desl)}</span>` : ''}
         ${L.abateReal ? `<span class="chip warn">Abate ${eur(L.abateReal)}</span>` : ''}
         <span class="chip acc">${esc(P[0])} ${eur(L.p1)} · ${esc(P[1])} ${eur(L.p2)}</span>
       </div></button>`;
@@ -404,12 +503,18 @@ $('sheetBg').onclick = fecharFolha;
 $('sheetFechar').onclick = fecharFolha;
 
 function formServico(s) {
-  const novo = !s; s = s || { data: hoje(), evento: '', recebido: '', fotos: '', roloId: S.config.rolos[0]?.id || '', abater: '', obs: '' };
+  const novo = !s || !s.id; s = { data: hoje(), evento: '', recebido: '', fotos: '', roloId: S.config.rolos[0]?.id || '', abater: '', obs: '',
+    localidade: '', carroId: S.config.carros.length === 1 ? S.config.carros[0].id : '', deslocacoes: 1, ...(s || {}) };
+  const kmEst = { local: s.localidade || '', km: s.km || 0, min: s.kmMin || null, aprox: !!s.kmAprox, nome: s.kmNome || '' };
   const P = S.config.pessoas;
   abrirFolha(`<h3>${novo ? 'Novo serviço' : 'Editar serviço'}</h3>
     <div class="two"><div><label>Data</label><input type="date" id="fData" value="${esc(s.data)}"></div>
     <div><label>Rolo</label><select id="fRolo">${S.config.rolos.map(r => `<option value="${esc(r.id)}" ${r.id === s.roloId ? 'selected' : ''}>${esc(r.nome)}</option>`).join('')}</select></div></div>
     <label>Evento / Cliente</label><input id="fEvento" value="${esc(s.evento)}" placeholder="Ex.: Casamento Ana & Rui">
+    <label>Localidade do serviço</label>${htmlKm('f', s.localidade)}
+    <div class="two"><div><label>Carro</label>${htmlCarros('fCarro', s.carroId)}</div>
+    <div><label>Nº de deslocações</label><input id="fDesl" inputmode="numeric" value="${esc(s.deslocacoes || 1)}"></div></div>
+    <div class="hint">Cada deslocação conta ida e volta${S.config.carros.length ? '' : ' · <b>Ainda não há carros — adiciona-os na Configuração</b>'}.</div>
     <div class="two"><div><label>Recebido (€)</label><input id="fRec" inputmode="decimal" value="${esc(s.recebido)}"></div>
     <div><label>Nº de fotos</label><input id="fFotos" inputmode="numeric" value="${esc(s.fotos)}"></div></div>
     <label>Quero abater ao investimento (€)</label><input id="fAbater" inputmode="decimal" value="${esc(s.abater)}" placeholder="0">
@@ -419,7 +524,8 @@ function formServico(s) {
     <div class="actions">${novo ? '' : '<button class="btn del" id="fDel">Apagar</button>'}<button class="btn pri" id="fOk">Guardar</button></div>`);
   const prev = () => {
     // simula o cálculo com os valores do formulário
-    const tmp = { ...s, id: s.id || '__novo', criado: s.criado || Date.now(), data: $('fData').value, roloId: $('fRolo').value, recebido: num($('fRec').value), fotos: num($('fFotos').value), abater: num($('fAbater').value) };
+    const dsl = custoDeslocacao(kmValidos(), $('fCarro').value, $('fDesl').value);
+    const tmp = { ...s, id: s.id || '__novo', criado: s.criado || Date.now(), data: $('fData').value, roloId: $('fRolo').value, recebido: num($('fRec').value), fotos: num($('fFotos').value), abater: num($('fAbater').value), custoDesloc: dsl.custo };
     const backup = S.servicos; S.servicos = [...S.servicos.filter(x => x.id !== tmp.id), tmp];
     const C = calcular(); S.servicos = backup;
     const L = C.linhas[tmp.id], faltaAntes = L.faltaDepois + L.abateReal;
@@ -427,22 +533,85 @@ function formServico(s) {
     $('fPrev').innerHTML = `
       <div class="row"><span class="k">Custo/foto</span><span class="v">${eur4(L.cf)}</span></div>
       <div class="row"><span class="k">Custo das fotos</span><span class="v">${eur(L.custo)}</span></div>
+      ${kmValidos() ? `<div class="row"><span class="k">Deslocação (${Math.round(dsl.kmTotal)} km${dsl.litros ? ' · ' + dsl.litros.toLocaleString('pt-PT', { maximumFractionDigits: 1 }) + ' L' : ''})</span><span class="v">${dsl.aviso ? `<span style="color:var(--bad)">${esc(dsl.aviso)}</span>` : eur(dsl.custo)}</span></div>` : ''}
       <div class="row"><span class="k">Lucro do serviço</span><span class="v">${eur(L.lucro)} · ${pct(L.margem)}</span></div>
       <div class="row"><span class="k">Abate real</span><span class="v">${eur(L.abateReal)}</span></div>
       <div class="row"><span class="k">Fica para dividir</span><span class="v">${eur(L.dividir)}</span></div>
       <div class="row"><span class="k">${esc(P[0])} / ${esc(P[1])}</span><span class="v">${eur(L.p1)} / ${eur(L.p2)}</span></div>`;
   };
-  ['fData', 'fRolo', 'fRec', 'fFotos', 'fAbater'].forEach(i => $(i).oninput = prev); prev();
+  const kmValidos = ligarKm('f', kmEst, () => prev());
+  ['fData', 'fRolo', 'fRec', 'fFotos', 'fAbater', 'fCarro', 'fDesl'].forEach(i => $(i).oninput = prev); prev();
   $('fOk').onclick = async () => {
     const rolo = S.config.rolos.find(r => r.id === $('fRolo').value);
     const reg = { id: s.id || uid(), criado: s.criado || Date.now(), data: $('fData').value || hoje(), evento: $('fEvento').value.trim(),
       recebido: num($('fRec').value), fotos: Math.round(num($('fFotos').value)), roloId: $('fRolo').value,
       roloNome: rolo?.nome || '', custoFotoGuardado: custoFoto(rolo), abater: num($('fAbater').value), obs: $('fObs').value.trim() };
+    const km = kmValidos(), dsl = custoDeslocacao(km, $('fCarro').value, $('fDesl').value);
+    Object.assign(reg, { localidade: $('fLocal').value.trim(), km, kmMin: km ? kmEst.min : null, kmAprox: km ? kmEst.aprox : false, kmNome: km ? kmEst.nome : '',
+      carroId: $('fCarro').value, carroNome: dsl.carro?.nome || '', deslocacoes: dsl.n, custoDesloc: r2(dsl.custo) });
+    if (reg.localidade && !km && !confirm('Ainda não calculaste os km desta localidade. Guardar sem custo de deslocação?')) return;
     if (!reg.recebido && !reg.fotos) return toast('Preenche o valor recebido ou o nº de fotos', 'erro');
     await guardar('servicos', reg); fecharFolha(); toast('Serviço guardado');
   };
   if (!novo) $('fDel').onclick = async () => { if (confirm('Apagar este serviço?')) { await apagar('servicos', s.id); fecharFolha(); toast('Serviço apagado'); } };
 }
+
+// ── SIMULADOR DE ORÇAMENTO ──
+let simUltimo = { local: '', km: 0 }, simVals = null;
+function simulador() {
+  const v = simVals || { carroId: S.config.carros.length === 1 ? S.config.carros[0].id : '', desl: 1, fotos: '', roloId: S.config.rolos[0]?.id || '', margem: 60, outros: '', preco: '' };
+  abrirFolha(`<h3>Simulador de orçamento</h3>
+    <label style="margin-top:0">Localidade do serviço</label>${htmlKm('s', simUltimo.local)}
+    <div class="two"><div><label>Carro</label>${htmlCarros('sCarro', v.carroId)}</div>
+    <div><label>Nº de deslocações</label><input id="sDesl" inputmode="numeric" value="${esc(v.desl)}"></div></div>
+    <div class="two"><div><label>Combustível (€/L)</label><input id="sComb" inputmode="decimal" value="${S.config.precoComb ? String(S.config.precoComb).replace('.', ',') : ''}" placeholder="1,65"></div>
+    <div><label>Média do carro (L/100km)</label><input id="sCons" inputmode="decimal" placeholder="escolhe o carro"></div></div>
+    <div class="two"><div><label>Nº de fotos (estimado)</label><input id="sFotos" inputmode="numeric" value="${esc(v.fotos)}" placeholder="Ex.: 400"></div>
+    <div><label>Rolo</label><select id="sRolo">${S.config.rolos.map(r => `<option value="${esc(r.id)}" ${r.id === v.roloId ? 'selected' : ''}>${esc(r.nome)}</option>`).join('')}</select></div></div>
+    <div class="two"><div><label>Outros custos (€)</label><input id="sOutros" inputmode="decimal" value="${esc(v.outros)}" placeholder="portagens…"></div>
+    <div><label>Margem desejada (%)</label><input id="sMargem" inputmode="numeric" value="${esc(v.margem)}"></div></div>
+    <div class="preview" id="sRes"></div>
+    <div id="sSug"></div>
+    <label>Preço que vais pedir (€)</label><input id="sPreco" inputmode="decimal" value="${esc(v.preco)}" placeholder="opcional">
+    <div class="preview" id="sLucro" style="display:none"></div>
+    <div class="actions"><button class="btn pri" id="sCriar">Criar serviço com estes dados</button></div>`);
+  const consDoCarro = () => { const c = S.config.carros.find(c => c.id === $('sCarro').value); $('sCons').value = c && num(c.consumo) ? String(c.consumo).replace('.', ',') : ''; };
+  consDoCarro();
+  const kmValidos = ligarKm('s', simUltimo, () => calc());
+  const calc = () => {
+    simVals = { carroId: $('sCarro').value, desl: $('sDesl').value, fotos: $('sFotos').value, roloId: $('sRolo').value, margem: $('sMargem').value, outros: $('sOutros').value, preco: $('sPreco').value };
+    const km = kmValidos(), n = Math.max(1, Math.round(num($('sDesl').value)) || 1), kmTotal = km * 2 * n;
+    const litros = kmTotal * num($('sCons').value) / 100, comb = litros * num($('sComb').value);
+    const rolo = S.config.rolos.find(r => r.id === $('sRolo').value), fotos = num($('sFotos').value), cFotos = fotos * custoFoto(rolo);
+    const outros = num($('sOutros').value), total = comb + cFotos + outros;
+    const falta = km && (!num($('sCons').value) || !num($('sComb').value)) ? '<span style="color:var(--bad)">falta média ou preço</span>' : null;
+    $('sRes').innerHTML = `
+      <div class="row"><span class="k">Km (ida e volta${n > 1 ? ' × ' + n : ''})</span><span class="v">${km ? Math.round(kmTotal).toLocaleString('pt-PT') + ' km' : '—'}</span></div>
+      <div class="row"><span class="k">Combustível${litros ? ` (${litros.toLocaleString('pt-PT', { maximumFractionDigits: 1 })} L)` : ''}</span><span class="v">${falta || eur(comb)}</span></div>
+      <div class="row"><span class="k">Custo das fotos${fotos ? ` (${fotos.toLocaleString('pt-PT')} × ${eur4(custoFoto(rolo))})` : ''}</span><span class="v">${eur(cFotos)}</span></div>
+      ${outros ? `<div class="row"><span class="k">Outros custos</span><span class="v">${eur(outros)}</span></div>` : ''}
+      <div class="row"><span class="k"><b>Custo total</b></span><span class="v">${eur(total)}</span></div>`;
+    const m = Math.min(95, Math.max(0, num($('sMargem').value))) / 100, sug = m < 1 ? total / (1 - m) : 0;
+    const arred = x => Math.ceil(x / 5) * 5;
+    $('sSug').innerHTML = total ? `<div class="big-res"><div class="lbl">Preço sugerido para ${Math.round(m * 100)}% de margem</div><div class="val">${eur(arred(sug))}</div>
+      <div class="lbl">Lucro ≈ ${eur(arred(sug) - total)} (arredondado aos 5 €)</div></div>
+      <div class="sugest">${[50, 70, 80].map(p => `<div>${p}% margem<b>${eur(arred(total / (1 - p / 100)))}</b></div>`).join('')}</div>` : '';
+    const preco = num($('sPreco').value);
+    $('sLucro').style.display = preco ? 'block' : 'none';
+    if (preco) $('sLucro').innerHTML = `<div class="row"><span class="k">Lucro com ${eur(preco)}</span><span class="v" style="color:${preco - total >= 0 ? 'var(--ok)' : 'var(--bad)'}">${eur(preco - total)}</span></div>
+      <div class="row"><span class="k">Margem</span><span class="v">${pct((preco - total) / preco)}</span></div>`;
+    return { km, n, fotos, preco: preco || arred(sug) };
+  };
+  $('sCarro').onchange = () => { consDoCarro(); calc(); };
+  ['sDesl', 'sComb', 'sCons', 'sFotos', 'sRolo', 'sOutros', 'sMargem', 'sPreco'].forEach(i => $(i).oninput = calc);
+  calc();
+  $('sCriar').onclick = () => {
+    const r = calc(); fecharFolha();
+    setTimeout(() => formServico({ localidade: $('sLocal')?.value || simUltimo.local, km: r.km, kmMin: simUltimo.min, kmAprox: simUltimo.aprox, kmNome: simUltimo.nome,
+      carroId: $('sCarro')?.value || simVals.carroId, deslocacoes: r.n, fotos: r.fotos || '', roloId: simVals.roloId, recebido: r.preco ? r2(r.preco) : '' }), 250);
+  };
+}
+$('btnSim').onclick = simulador;
 
 function formCompra(c) {
   const novo = !c; c = c || { data: hoje(), descricao: '', total: '', p1: '', p2: '', tipo: 'Rolo', obs: '' };
@@ -477,7 +646,7 @@ function formCompra(c) {
 // ── CONFIGURAÇÃO ──
 let cfgSujo = false, cfgRascunho = null;
 function renderConfig() {
-  cfgRascunho = structuredClone(S.config);
+  cfgRascunho = structuredClone(normCfg(S.config));
   desenharCfg();
 }
 function desenharCfg() {
@@ -491,6 +660,10 @@ function desenharCfg() {
     <button class="x" data-idel="${i}">×</button></div>`).join('');
   $('cfgInvTotal').textContent = eur(c.investimento.reduce((a, i) => a + num(i.valor), 0));
   $('cfgP1').value = c.pessoas[0]; $('cfgP2').value = c.pessoas[1];
+  $('cfgBase').value = c.base; $('cfgComb').value = c.precoComb ? String(c.precoComb).replace('.', ',') : '';
+  $('cfgCarros').innerHTML = c.carros.length ? c.carros.map((v, i) => `<div class="edit-line carro">
+    <input data-c="${i}" data-f="nome" value="${esc(v.nome)}" placeholder="Nome do carro"><input data-c="${i}" data-f="consumo" inputmode="decimal" value="${v.consumo ? String(v.consumo).replace('.', ',') : ''}" placeholder="5,5">
+    <button class="x" data-cdel="${i}">×</button></div>`).join('') : '<div class="hint" style="margin-bottom:10px">Ainda não há carros.</div>';
   $('cfgInvPor').innerHTML = c.pessoas.map((p, i) => `<option value="${i}" ${i === c.investimentoPor ? 'selected' : ''}>${esc(p)}</option>`).join('');
 }
 $('cfgRolos').oninput = e => { const el = e.target; if (el.dataset.r == null) return; cfgSujo = true; cfgRascunho.rolos[el.dataset.r][el.dataset.f] = el.dataset.f === 'nome' ? el.value : num(el.value); };
@@ -502,6 +675,11 @@ $('cfgRolos').onclick = e => { const i = e.target.dataset.rdel; if (i == null) r
 $('cfgInv').onclick = e => { const i = e.target.dataset.idel; if (i == null) return; cfgRascunho.investimento.splice(i, 1); cfgSujo = true; desenharCfg(); };
 $('addRolo').onclick = () => { cfgRascunho.rolos.push({ id: uid(), nome: 'Novo rolo', preco: 0, fotos: 1400 }); cfgSujo = true; desenharCfg(); };
 $('addInv').onclick = () => { cfgRascunho.investimento.push({ id: uid(), nome: '', valor: 0 }); cfgSujo = true; desenharCfg(); };
+$('cfgBase').oninput = e => { cfgRascunho.base = e.target.value; cfgSujo = true; };
+$('cfgComb').oninput = e => { cfgRascunho.precoComb = num(e.target.value); cfgSujo = true; };
+$('cfgCarros').oninput = e => { const el = e.target; if (el.dataset.c == null) return; cfgSujo = true; cfgRascunho.carros[el.dataset.c][el.dataset.f] = el.dataset.f === 'nome' ? el.value : num(el.value); };
+$('cfgCarros').onclick = e => { const i = e.target.dataset.cdel; if (i == null) return; cfgRascunho.carros.splice(i, 1); cfgSujo = true; desenharCfg(); };
+$('addCarro').onclick = () => { cfgRascunho.carros.push({ id: uid(), nome: `Carro ${cfgRascunho.carros.length + 1}`, consumo: 0 }); cfgSujo = true; desenharCfg(); };
 $('cfgP1').oninput = e => { cfgRascunho.pessoas[0] = e.target.value; cfgSujo = true; };
 $('cfgP2').oninput = e => { cfgRascunho.pessoas[1] = e.target.value; cfgSujo = true; };
 $('cfgInvPor').onchange = e => { cfgRascunho.investimentoPor = +e.target.value; cfgSujo = true; };
@@ -509,6 +687,7 @@ $('guardarCfg').onclick = async () => {
   const c = cfgRascunho;
   c.pessoas = c.pessoas.map((p, i) => (p || '').trim() || ['Pessoa 1', 'Pessoa 2'][i]);
   c.rolos = c.rolos.filter(r => (r.nome || '').trim());
+  c.carros = c.carros.filter(v => (v.nome || '').trim()); c.base = (c.base || '').trim() || BASE_DEFAULT;
   if (!c.rolos.length) return toast('Precisas de pelo menos um rolo', 'erro');
   await guardarConfig(c); cfgSujo = false; renderConfig(); toast('Configuração guardada');
 };
@@ -528,9 +707,9 @@ $('fileImport').onchange = async e => {
 };
 $('btnCsv').onclick = () => {
   const C = calcular(), P = S.config.pessoas, f = n => (Number(n) || 0).toFixed(2).replace('.', ',');
-  const cab = ['Data', 'Evento / Cliente', 'Recebido (€)', 'Nº fotos', 'Rolo', 'Custo/foto (€)', 'Custo fotos (€)', 'Lucro do serviço (€)', 'Margem', 'Quero abater (€)', 'Abate real (€)', 'Fica para dividir (€)', P[0] + ' (€)', P[1] + ' (€)'];
-  const linhas = C.ordem.map(s => { const L = C.linhas[s.id]; return [dataPT(s.data), s.evento, f(s.recebido), s.fotos, L.rolo?.nome || s.roloNome || '', (L.cf).toFixed(4).replace('.', ','), f(L.custo), f(L.lucro), pct(L.margem), f(s.abater), f(L.abateReal), f(L.dividir), f(L.p1), f(L.p2)]; });
-  linhas.push(['TOTAIS', '', f(C.T.recebido), C.T.fotos, '', '', f(C.T.custo), f(C.T.lucro), pct(C.T.margem), '', f(C.T.abate), f(C.T.dividir), f(C.T.p1), f(C.T.p2)]);
+  const cab = ['Data', 'Evento / Cliente', 'Recebido (€)', 'Nº fotos', 'Rolo', 'Custo/foto (€)', 'Custo fotos (€)', 'Localidade', 'Km (ida)', 'Carro', 'Deslocações', 'Custo deslocação (€)', 'Lucro do serviço (€)', 'Margem', 'Quero abater (€)', 'Abate real (€)', 'Fica para dividir (€)', P[0] + ' (€)', P[1] + ' (€)'];
+  const linhas = C.ordem.map(s => { const L = C.linhas[s.id]; return [dataPT(s.data), s.evento, f(s.recebido), s.fotos, L.rolo?.nome || s.roloNome || '', (L.cf).toFixed(4).replace('.', ','), f(L.custo), s.localidade || '', s.km ? String(s.km).replace('.', ',') : '', s.carroNome || '', s.km ? (s.deslocacoes || 1) : '', f(L.desl), f(L.lucro), pct(L.margem), f(s.abater), f(L.abateReal), f(L.dividir), f(L.p1), f(L.p2)]; });
+  linhas.push(['TOTAIS', '', f(C.T.recebido), C.T.fotos, '', '', f(C.T.custo), '', '', '', '', f(C.T.desl), f(C.T.lucro), pct(C.T.margem), '', f(C.T.abate), f(C.T.dividir), f(C.T.p1), f(C.T.p2)]);
   const csv = '﻿' + [cab, ...linhas].map(l => l.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(';')).join('\r\n');
   descarregar(`memorybox-servicos-${hoje()}.csv`, csv, 'text/csv;charset=utf-8');
 };
@@ -542,7 +721,7 @@ const fmtV = (v, f) => (v === '' || v == null) ? '—' : (f ? f(v) : String(v));
 function camposDe(col) {
   const P = S.config.pessoas;
   return col === 'servicos'
-    ? [['data', 'Data', dataPT], ['evento', 'Evento'], ['recebido', 'Recebido', eur], ['fotos', 'Nº fotos'], ['roloId', 'Rolo', id => (S.config.rolos.find(r => r.id === id) || {}).nome || id], ['abater', 'Quero abater', eur], ['obs', 'Observação']]
+    ? [['data', 'Data', dataPT], ['evento', 'Evento'], ['recebido', 'Recebido', eur], ['fotos', 'Nº fotos'], ['roloId', 'Rolo', id => (S.config.rolos.find(r => r.id === id) || {}).nome || id], ['localidade', 'Localidade'], ['km', 'Km (ida)', v => String(v).replace('.', ',') + ' km'], ['carroNome', 'Carro'], ['deslocacoes', 'Deslocações'], ['custoDesloc', 'Custo deslocação', eur], ['abater', 'Quero abater', eur], ['obs', 'Observação']]
     : [['data', 'Data', dataPT], ['tipo', 'Tipo'], ['descricao', 'Descrição'], ['total', 'Valor total', eur], ['p1', P[0], eur], ['p2', P[1], eur], ['obs', 'Observação']];
 }
 function diferencas(col, antes, depois) {
@@ -566,6 +745,10 @@ function diferencasConfig(a, d) {
   };
   lista(a.rolos, d.rolos, 'Rolo', [['preco', 'preço', eur], ['fotos', 'fotos/rolo']]);
   lista(a.investimento, d.investimento, 'Investimento', [['valor', 'valor', eur]]);
+  normCfg(a); normCfg(d);
+  if (a.base !== d.base) out.push(`Ponto de partida: ${a.base} → ${d.base}`);
+  if (num(a.precoComb) !== num(d.precoComb)) out.push(`Preço do combustível: ${a.precoComb ? eur(a.precoComb) : '—'} → ${d.precoComb ? eur(d.precoComb) : '—'} /L`);
+  lista(a.carros, d.carros, 'Carro', [['consumo', 'média', v => v ? String(v).replace('.', ',') + ' L/100km' : '—']]);
   return out;
 }
 async function registar(acao, tipo, titulo, detalhes) {
