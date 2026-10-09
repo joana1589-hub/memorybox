@@ -278,7 +278,13 @@ const FIREBASE_CONFIG = {
 // Exemplo:
 // const FIREBASE_CONFIG = { apiKey:"...", authDomain:"memorybox-xxxx.firebaseapp.com", projectId:"memorybox-xxxx",
 //   storageBucket:"...", messagingSenderId:"...", appId:"..." };
-const EMAILS_PERMITIDOS = ['joana1589@gmail.com', 'elineas_@hotmail.com'];
+// Emails que podem entrar e a quem pertencem (0 = 1.ª sócia, 1 = 2.ª sócia, como em Configuração → Sócias)
+const EMAILS = {
+  'joana1589@gmail.com': 0,
+  'elineas_@hotmail.com': 1,
+  'elianasantosphotography@gmail.com': 1
+};
+const pessoaDoEmail = e => { const i = EMAILS[(e || '').toLowerCase()]; return i == null ? -1 : i; };
 
 // ── Dados iniciais (copiados da folha MemoryBox_FINAL_CORRIGIDO_LOGICA) ──
 const DADOS_INICIAIS = {
@@ -761,11 +767,11 @@ async function registar(acao, tipo, titulo, detalhes) {
 }
 function renderHistorico() {
   const P = S.config.pessoas;
-  const opcoes = [['todos', 'Todos'], ...EMAILS_PERMITIDOS.map((e, i) => [e.toLowerCase(), P[i] || e])];
+  const opcoes = [['todos', 'Todos'], ...P.map((nome, i) => [String(i), nome])];
   $('histFiltro').innerHTML = opcoes.map(([v, l]) => `<button data-f="${esc(v)}" class="${filtroHist === v ? 'on' : ''}">${esc(l)}</button>`).join('');
-  const lista = historico.filter(m => filtroHist === 'todos' || (m.email || '').toLowerCase() === filtroHist);
+  const lista = historico.filter(m => filtroHist === 'todos' || String(pessoaDoEmail(m.email)) === filtroHist);
   if (!lista.length) { $('listaHist').innerHTML = '<div class="empty">Ainda não há movimentos registados.<br>A partir de agora, tudo o que for criado, alterado ou apagado aparece aqui.</div>'; return; }
-  const nomeDe = m => { const i = EMAILS_PERMITIDOS.map(e => e.toLowerCase()).indexOf((m.email || '').toLowerCase()); return i >= 0 ? (P[i] || m.quem) : (m.quem || m.email || '—'); };
+  const nomeDe = m => { const i = pessoaDoEmail(m.email); return i >= 0 ? (P[i] || m.quem) : (m.quem || m.email || '—'); };
   let html = '', diaAtual = '';
   for (const m of lista) {
     const d = new Date(m.quando), dia = d.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
@@ -855,13 +861,13 @@ async function iniciarNuvem() {
   let desligar = [];
   A.onAuthStateChanged(auth, async user => {
     desligar.forEach(f => f()); desligar = [];
-    if (user && !EMAILS_PERMITIDOS.map(e => e.toLowerCase()).includes((user.email || '').toLowerCase())) {
+    if (user && pessoaDoEmail(user.email) < 0) {
       toast('Este email não está autorizado', 'erro'); await A.signOut(auth); return;
     }
     if (!user) { $('app').style.display = 'none'; $('ecraLogin').style.display = 'flex'; return; }
     $('ecraLogin').style.display = 'none'; $('app').style.display = 'block';
     $('modoTxt').textContent = `Dados partilhados na nuvem · sessão: ${user.email}`;
-    { const i = EMAILS_PERMITIDOS.map(e => e.toLowerCase()).indexOf(user.email.toLowerCase()); eu = { email: user.email.toLowerCase(), nome: S.config.pessoas[i] || user.displayName || user.email }; }
+    eu = { email: user.email.toLowerCase(), nome: S.config.pessoas[pessoaDoEmail(user.email)] || user.displayName || user.email };
     estadoSync(navigator.onLine, navigator.onLine ? 'sincronizado' : 'sem rede');
     const raiz = F.doc(db, 'memorybox', 'v1');
     // Primeira vez: cria a configuração e o serviço da folha

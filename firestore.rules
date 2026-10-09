@@ -1,6 +1,6 @@
 rules_version = '2';
 // Copiar para: Firebase Console → Firestore Database → Regras → Publicar
-// Os emails têm de ser os mesmos que estão em EMAILS_PERMITIDOS no index.html
+// Os emails têm de ser os mesmos que estão em EMAILS no index.html
 service cloud.firestore {
   match /databases/{database}/documents {
     function autorizado() {
@@ -8,7 +8,8 @@ service cloud.firestore {
         && request.auth.token.email_verified == true
         && request.auth.token.email in [
              'joana1589@gmail.com',
-             'elineas_@hotmail.com'
+             'elineas_@hotmail.com',
+             'elianasantosphotography@gmail.com'
            ];
     }
     match /memorybox/v1 {
