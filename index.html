@@ -10,6 +10,11 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="MemoryBox">
+<script>
+  // Guarda o pedido de instalação do Chrome (Android/computador) para o botão "Instalar"
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); window._pedidoInstalar = e; document.documentElement.classList.add('pode-instalar'); });
+  window.addEventListener('appinstalled', () => { window._pedidoInstalar = null; document.documentElement.classList.add('instalada'); });
+</script>
 <style>
 :root{
   --bg:#f6f2ee; --card:#ffffff; --ink:#2b1d33; --muted:#7a6d80; --line:#e8e0e6;
@@ -21,6 +26,13 @@
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:16px}
 button,input,select,textarea{font:inherit;color:inherit}
 header{position:sticky;top:0;z-index:5;background:var(--brand);color:#fff;padding:calc(12px + env(safe-area-inset-top)) 16px 12px;display:flex;align-items:center;gap:10px}
+.btn-inst{border:0;border-radius:20px;padding:7px 12px;background:var(--accent);color:#fff;font-weight:700;font-size:13px;cursor:pointer;display:none}
+html.mostrar-instalar .btn-inst{display:inline-block}
+html.instalada .btn-inst{display:none!important}
+.passos{counter-reset:p;padding:0;margin:8px 0 0;list-style:none}
+.passos li{counter-increment:p;position:relative;padding:10px 0 10px 40px;border-bottom:1px solid var(--line);line-height:1.4}
+.passos li:last-child{border-bottom:0}
+.passos li::before{content:counter(p);position:absolute;left:0;top:9px;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:14px}
 header h1{font-size:19px;margin:0;font-weight:700;letter-spacing:.2px;flex:1}
 header h1 span{color:var(--accent)}
 .sync{font-size:12px;opacity:.8;display:flex;align-items:center;gap:6px}
@@ -127,11 +139,13 @@ nav button{font-size:11px}
   <h1>Memory<span>Box</span></h1>
   <p>Controlo simples — saber se dá lucro</p>
   <button class="btn pri" id="btnLogin" style="min-width:240px">Entrar com Google</button>
+  <button class="btn-inst" data-instalar style="margin-top:18px;padding:10px 18px;background:transparent;border:1px solid rgba(255,255,255,.5)">⬇ Instalar a app no telemóvel</button>
 </div>
 
 <div id="app" style="display:none">
 <header>
   <h1>Memory<span>Box</span></h1>
+  <button class="btn-inst" data-instalar>⬇ Instalar</button>
   <div class="sync"><i class="dot" id="syncDot"></i><span id="syncTxt"></span></div>
 </header>
 
@@ -893,6 +907,31 @@ async function iniciarNuvem() {
 (FIREBASE_CONFIG ? iniciarNuvem() : iniciarLocal()).catch(e => { console.error(e); toast('Erro ao iniciar — a usar dados locais', 'erro'); iniciarLocal(); });
 
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+
+// ── INSTALAR NO TELEMÓVEL ──
+const jaInstalada = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const ua = navigator.userAgent, eIOS = /iphone|ipad|ipod/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+if (jaInstalada()) document.documentElement.classList.add('instalada');
+else document.documentElement.classList.add('mostrar-instalar');
+async function instalar() {
+  if (window._pedidoInstalar) {
+    const e = window._pedidoInstalar; window._pedidoInstalar = null;
+    e.prompt(); const r = await e.userChoice.catch(() => null);
+    if (r && r.outcome === 'accepted') { document.documentElement.classList.add('instalada'); toast('App instalada 🎉'); }
+    return;
+  }
+  const safariIOS = eIOS && !/crios|fxios|edgios/i.test(ua);
+  const passos = eIOS
+    ? (safariIOS
+      ? ['Carrega no botão <b>Partilhar</b> <span style="font-size:18px">⎋</span> (quadrado com seta para cima), em baixo no ecrã.', 'Desce e escolhe <b>Adicionar ao ecrã principal</b>.', 'Carrega em <b>Adicionar</b>. O ícone da MemoryBox aparece no ecrã do iPhone.']
+      : ['No iPhone a instalação só funciona no <b>Safari</b>.', 'Copia o endereço <b>joana1589-hub.github.io/memorybox</b> e abre-o no Safari.', 'Depois: botão <b>Partilhar</b> → <b>Adicionar ao ecrã principal</b> → <b>Adicionar</b>.'])
+    : ['Abre esta página no <b>Google Chrome</b>.', 'Carrega no menu <b>⋮</b> (três pontos, em cima à direita).', 'Escolhe <b>Instalar aplicação</b> (ou <b>Adicionar ao ecrã principal</b>) e confirma.', 'O ícone da MemoryBox aparece no ecrã do telemóvel.'];
+  abrirFolha(`<h3>Instalar a MemoryBox</h3><ol class="passos">${passos.map(x => `<li>${x}</li>`).join('')}</ol>
+    <div class="hint" style="margin-top:12px">Depois abre sempre pelo ícone — funciona como uma app e abre mesmo sem rede.</div>
+    <div class="actions"><button class="btn pri" id="instOk">Percebi</button></div>`);
+  $('instOk').onclick = fecharFolha;
+}
+document.querySelectorAll('[data-instalar]').forEach(b => b.onclick = instalar);
 </script>
 </body>
 </html>
