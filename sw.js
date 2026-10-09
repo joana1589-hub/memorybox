@@ -1,6 +1,6 @@
 // MemoryBox — Service Worker
 // Muda a versão sempre que publicares uma alteração para os telemóveis apanharem a versão nova.
-const VERSAO = 'memorybox-v11';
+const VERSAO = 'memorybox-v12';
 
 const ESSENCIAIS = ['./', './index.html', './manifest.json', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 const CDN_CACHE = ['www.gstatic.com'];

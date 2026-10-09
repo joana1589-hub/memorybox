@@ -10,8 +10,10 @@ Mesma lógica da folha `MemoryBox_FINAL_CORRIGIDO_LOGICA.xlsx`.
   O **abate real** é limitado ao que ainda falta recuperar (os serviços são contados por ordem de data).
 - **Fica para dividir** = Recebido − Abate real, dividido 50% / 50%.
 - **Deslocações**: em cada serviço escreves a localidade e a app calcula os km desde Casal Comba (OpenStreetMap/OSRM, gratuito) e o custo do combustível (km × 2 × nº de deslocações × média do carro × preço do combustível). Esse custo entra no lucro do serviço.
-- **Simulador de orçamento** (separador Serviços): localidade, carro, nº de fotos e margem desejada → custo total e preço sugerido.
-- **Agenda**: calendário do mês com os eventos (pago / confirmado / orçamento). Os orçamentos ficam em “À espera de resposta” com os botões *✓ Marcou* (passa a Confirmado) e *✗ Não marcou* (passa a Cancelado). Cada evento pode ir para o calendário do telemóvel.
+- **Simulador de orçamento** (separador Orçamentos): localidade, carro, nº de fotos e margem desejada → custo total e preço sugerido.
+- **Orçamentos**: cada pedido passa por *Pedido → Enviado → Aceite / Recusado*. Ao carregar em *✓ Aceite* o serviço passa a Confirmado e aparece na Agenda; os orçamentos não contam nos totais.
+- **Agenda**: calendário do mês com os eventos marcados (pago / confirmado; os orçamentos em aberto aparecem como pontos vazios). Cada evento pode ir para o calendário do telemóvel.
+- **Menu**: Resumo · Orçamentos · Agenda · Serviços · Mais (Compras, Histórico, Ajustes).
 - **Compras**: novos rolos e outras despesas, com quanto pagou cada uma (botão *A meias*).
 
 ## 1. Ativar o GitHub Pages

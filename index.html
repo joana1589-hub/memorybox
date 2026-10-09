@@ -123,7 +123,7 @@ label.mini{font-size:12px;margin:0;color:var(--muted)}label.mini input{margin-to
 .big-res{background:var(--brand);color:#fff;border-radius:14px;padding:14px;margin-top:12px}
 .big-res .lbl{font-size:13px;opacity:.8}.big-res .val{font-size:28px;font-weight:800}
 .estado{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.3px}
-.estado.orcamento{background:#e7e3f3;color:#5b4a8a}.estado.confirmado{background:var(--warn-soft);color:var(--warn)}
+.estado.orcamento{background:#e7e3f3;color:#5b4a8a}.estado.pedido{background:#e3eef8;color:#2f5f8a}.estado.confirmado{background:var(--warn-soft);color:var(--warn)}
 .estado.sinal{background:#fde7d6;color:#b05a12}.estado.pago{background:var(--ok-soft);color:var(--ok)}.estado.cancelado{background:#eee;color:#777;text-decoration:line-through}
 .item.inativo{opacity:.72}
 .acoes{display:flex;gap:8px;margin-top:10px}
@@ -174,7 +174,7 @@ nav button{font-size:12px;padding-left:0;padding-right:0}
 .cal .d b{font-weight:600;width:26px;height:26px;display:flex;align-items:center;justify-content:center}
 .pts{display:flex;gap:3px;flex-wrap:wrap;justify-content:center;max-width:40px}
 .pt{width:8px;height:8px;border-radius:50%}
-.pt.confirmado,.pt.sinal{background:var(--warn)}.pt.pago{background:var(--ok)}.pt.orcamento{background:#fff;border:2px solid #6c5aa8;width:8px;height:8px;box-sizing:border-box}
+.pt.confirmado,.pt.sinal{background:var(--warn)}.pt.pago{background:var(--ok)}.pt.pedido{background:#fff;border:2px dashed #2f5f8a;width:8px;height:8px;box-sizing:border-box}.pt.orcamento{background:#fff;border:2px solid #6c5aa8;width:8px;height:8px;box-sizing:border-box}
 .cal-leg{display:flex;flex-wrap:wrap;gap:12px;font-size:12.5px;color:var(--muted);margin:10px 2px 0}.cal-leg span{display:flex;align-items:center;gap:5px}
 .ev{background:var(--card);border-radius:14px;padding:13px 14px;margin-bottom:10px}
 .ev .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
@@ -182,6 +182,16 @@ nav button{font-size:12px;padding-left:0;padding-right:0}
 .ev .btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .ev .btns button,.ev .btns a{flex:1;min-width:96px;border:0;border-radius:12px;padding:11px 8px;font-weight:700;font-size:14px;cursor:pointer;text-align:center;text-decoration:none;background:var(--bg);color:var(--ink)}
 .ev .btns .sim{background:var(--ok-soft);color:var(--ok)}.ev .btns .nao{background:#f9dedb;color:var(--bad)}
+.mais-grid{display:grid;gap:10px;margin-top:4px}
+.mais-grid button{display:flex;align-items:center;gap:14px;border:0;border-radius:14px;background:var(--card);padding:16px;font-size:17px;font-weight:600;color:var(--ink);cursor:pointer;text-align:left}
+.mais-grid button svg{width:26px;height:26px;stroke:var(--accent);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.mais-grid button small{display:block;font-size:13px;color:var(--muted);font-weight:400;margin-top:2px}
+.lembrete{display:inline-block;background:var(--warn-soft);color:#7a4f0d;border-radius:8px;padding:4px 8px;font-size:12.5px;margin-top:6px}
+.fluxo{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:2px 2px 12px}
+.fluxo b{color:var(--ink)}
+.stat.link{cursor:pointer}
+#orcFiltro button{font-size:13.5px;padding:10px 4px;white-space:nowrap}
+@media (max-width:400px){#orcFiltro{display:grid;grid-template-columns:1fr 1fr;gap:3px}}
 .choque{background:#f9dedb;color:#8e2a1f;border-radius:10px;padding:8px 10px;font-size:13.5px;margin-top:8px}
 .btn-inst{white-space:nowrap}
 @media (max-width:400px){.sync span{display:none}}
@@ -221,7 +231,7 @@ nav button{font-size:12px;padding-left:0;padding-right:0}
       <div class="stat"><div class="lbl">Deslocações</div><div class="val" id="r-desl"></div></div>
       <div class="stat"><div class="lbl">Km percorridos</div><div class="val" id="r-km"></div></div>
       <div class="stat"><div class="lbl">Por receber</div><div class="val" id="r-receber"></div></div>
-      <div class="stat"><div class="lbl">Orçamentos</div><div class="val" id="r-orc"></div></div>
+      <div class="stat link" id="r-orc-box"><div class="lbl">Orçamentos em aberto ›</div><div class="val" id="r-orc"></div></div>
     </div>
 
     <h2>Próximos eventos</h2>
@@ -253,9 +263,16 @@ nav button{font-size:12px;padding-left:0;padding-right:0}
     <div class="card" id="r-compras"></div>
   </section>
 
+  <!-- ORÇAMENTOS -->
+  <section class="view" id="v-orcamentos">
+    <button class="btn dark block" id="btnSim" style="margin-bottom:12px">🧮 Simulador de orçamento</button>
+    <div class="fluxo"><b>Pedido</b> → <b>Enviado</b> → <b>Aceite</b> (vai para a Agenda) ou <b>Recusado</b></div>
+    <div class="seg" id="orcFiltro"></div>
+    <div id="listaOrc"></div>
+  </section>
+
   <!-- SERVIÇOS -->
   <section class="view" id="v-servicos">
-    <button class="btn dark block" id="btnSim" style="margin-bottom:6px">🧮 Simulador de orçamento</button>
     <h2>Serviços</h2>
     <div id="listaServicos"></div>
     <div class="card how">
@@ -346,11 +363,10 @@ nav button{font-size:12px;padding-left:0;padding-right:0}
 
 <nav>
   <button data-v="resumo" class="active"><svg viewBox="0 0 24 24"><path d="M3 12l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Resumo</button>
-  <button data-v="servicos"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/></svg>Serviços</button>
-  <button data-v="compras"><svg viewBox="0 0 24 24"><path d="M5 7h14l-1.5 12h-11z"/><path d="M9 7a3 3 0 016 0"/></svg>Compras</button>
+  <button data-v="orcamentos"><svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h4"/></svg>Orçamentos</button>
   <button data-v="agenda"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Agenda</button>
-  <button data-v="historico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Histórico</button>
-  <button data-v="config"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>Ajustes</button>
+  <button data-v="servicos"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/></svg>Serviços</button>
+  <button data-v="mais"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>Mais</button>
 </nav>
 </div>
 
@@ -506,8 +522,20 @@ const ESTADOS = { orcamento: 'Orçamento', confirmado: 'Confirmado', cancelado: 
 const estadoDe = s => s.estado || 'confirmado';
 const ativo = s => estadoDe(s) === 'confirmado';                       // conta nos totais
 const pagoDe = s => s.pago == null ? num(s.recebido) : num(s.pago);     // serviços antigos: já recebidos
+const FASES = { pedido: 'Pedido', enviado: 'Enviado', aceite: 'Aceite', recusado: 'Recusado' };
+// fase do orçamento: pedido → enviado → aceite (confirmado) / recusado (cancelado)
+function faseDe(s) {
+  const e = estadoDe(s);
+  if (e === 'orcamento') return s.orcFase === 'pedido' ? 'pedido' : 'enviado';
+  if (s.orcFase === 'aceite') return 'aceite';
+  if (e === 'cancelado' && s.orcFase === 'recusado') return 'recusado';
+  return null;
+}
+const diasDesde = iso => iso ? Math.round((new Date(hoje()) - new Date(iso)) / 864e5) : null;
 function etiqueta(s) {
-  const e = estadoDe(s); if (e !== 'confirmado') return { cls: e, txt: ESTADOS[e] };
+  const e = estadoDe(s);
+  if (e === 'orcamento') return faseDe(s) === 'pedido' ? { cls: 'pedido', txt: 'Pedido' } : { cls: 'orcamento', txt: 'Enviado' };
+  if (e === 'cancelado') return { cls: 'cancelado', txt: s.orcFase === 'recusado' ? 'Recusado' : 'Cancelado' };
   const pg = pagoDe(s), tot = num(s.recebido);
   return pg >= tot && tot > 0 ? { cls: 'pago', txt: 'Pago' } : pg > 0 ? { cls: 'sinal', txt: 'Sinal pago' } : { cls: 'confirmado', txt: 'Confirmado' };
 }
@@ -573,7 +601,7 @@ function renderExtrasResumo(C) {
     ? `<div class="aviso mau">⚠️ <b>${esc(x.rolo.nome)}:</b> os próximos eventos precisam de ${fotosN(x.reservadas)} fotos e só restam ${fotosN(x.restam)}. Faltam <b>${fotosN(-x.depois)} fotos</b> — compra mais rolos.</div>`
     : `<div class="aviso">⚠️ <b>${esc(x.rolo.nome)}:</b> ${x.reservadas ? `depois dos próximos eventos ficam` : 'restam'} só <b>${fotosN(x.depois)} fotos</b>. Pensa em comprar mais.</div>`).join('');
   // próximos eventos
-  const prox = C.ordem.filter(s => (s.data || '') >= h && estadoDe(s) !== 'cancelado').slice(0, 6);
+  const prox = C.ordem.filter(s => (s.data || '') >= h && ativo(s)).slice(0, 6);
   $('r-prox').innerHTML = prox.length ? prox.map(s => { const d = (s.data || '').split('-'), et = etiqueta(s), L = C.linhas[s.id];
     return `<div class="prox" data-serv="${esc(s.id)}"><div class="dt"><b>${+d[2] || ''}</b><span>${MESES[+d[1] - 1] || ''}</span></div>
       <div class="info"><div class="t">${esc(s.evento || 'Sem nome')}</div><div class="m">${s.hora ? '🕒 ' + s.hora + ' · ' : ''}${s.localidade ? '📍 ' + esc(s.localidade) + ' · ' : ''}${fotosN(num(s.fotos))} fotos${L.receber ? ' · falta ' + eur(L.receber) : ''}</div></div>
@@ -652,8 +680,9 @@ function render() {
 
   // Serviços: próximos (por ordem de data) e depois os anteriores (mais recente primeiro)
   const h = hoje();
-  const proximos = C.ordem.filter(s => (s.data || '') >= h && estadoDe(s) !== 'cancelado');
-  const anteriores = [...C.ordem].reverse().filter(s => !proximos.includes(s));
+  const naLista = C.ordem.filter(s => estadoDe(s) !== 'orcamento' && faseDe(s) !== 'recusado');   // orçamentos ficam no separador próprio
+  const proximos = naLista.filter(s => (s.data || '') >= h && estadoDe(s) !== 'cancelado');
+  const anteriores = [...naLista].reverse().filter(s => !proximos.includes(s));
   const itemServ = s => {
     const L = C.linhas[s.id], et = etiqueta(s);
     return `<div class="item${L.conta ? '' : ' inativo'}" role="button" tabindex="0" data-serv="${esc(s.id)}">
@@ -667,7 +696,7 @@ function render() {
         ${L.conta ? `<span class="chip acc">${esc(P[0])} ${eur(L.p1)} · ${esc(P[1])} ${eur(L.p2)}</span>` : ''}
       </div>${htmlContacto(s.telefone)}</div>`;
   };
-  $('listaServicos').innerHTML = !C.ordem.length ? '<div class="empty">Ainda não há serviços.<br>Carrega no + para adicionar.</div>'
+  $('listaServicos').innerHTML = !naLista.length ? '<div class="empty">Ainda não há serviços.<br>Carrega no + para adicionar.</div>'
     : (proximos.length ? `<div class="secao">Próximos (${proximos.length})</div>` + proximos.map(itemServ).join('') : '')
     + (anteriores.length ? `<div class="secao">Anteriores (${anteriores.length})</div>` + anteriores.map(itemServ).join('') : '');
 
@@ -680,9 +709,69 @@ function render() {
     </button>`).join('') : '<div class="empty">Sem compras registadas.<br>Carrega no + para adicionar.</div>';
 
   renderAgenda();
+  renderOrcamentos();
   renderHistorico();
   if (vista === 'config' && !cfgSujo) renderConfig();
 }
+
+// ── ORÇAMENTOS ──
+let orcFiltro = 'pedido';
+function cartaoOrc(s) {
+  const f = faseDe(s), et = etiqueta(s), dEnv = diasDesde(s.enviadoEm);
+  const ocupado = s.data && f !== 'aceite' && f !== 'recusado' ? S.servicos.filter(x => x.id !== s.id && x.data === s.data && ativo(x)) : [];
+  const btn = (attr, txt, cls = '') => `<button class="${cls}" ${attr}="${esc(s.id)}">${txt}</button>`;
+  const botoes = f === 'pedido' ? btn('data-enviar', '📤 Enviado', 'sim') + btn('data-abrir', 'Editar') + btn('data-recusar', '✗ Recusado', 'nao')
+    : f === 'enviado' ? btn('data-aceitar', '✓ Aceite', 'sim') + btn('data-recusar', '✗ Recusado', 'nao') + btn('data-abrir', 'Editar')
+    : f === 'aceite' ? (s.data ? btn('data-veragenda', '📅 Ver na agenda') : '') + btn('data-abrir', 'Abrir')
+    : btn('data-reabrir', '↺ Reabrir') + btn('data-abrir', 'Abrir');
+  return `<div class="ev">
+    <div class="top"><span class="t">${esc(s.evento || 'Sem nome')}</span><span class="estado ${et.cls}">${f === 'aceite' ? 'Aceite' : et.txt}</span></div>
+    <div class="m">${s.data ? '📅 ' + dataLonga(s.data) + (s.hora ? ' · ' + s.hora : '') : '📅 Sem data'}${s.localidade ? ' · 📍 ' + esc(s.localidade) : ''}</div>
+    <div class="m">${num(s.recebido) ? '💶 ' + eur(s.recebido) : '<span style="color:var(--warn)">Ainda sem valor</span>'}${num(s.fotos) ? ' · ' + fotosN(num(s.fotos)) + ' fotos' : ''}${s.pedidoEm ? ' · pedido ' + dataPT(s.pedidoEm) : ''}${s.enviadoEm ? ' · enviado ' + dataPT(s.enviadoEm) : ''}${s.respostaEm && (f === 'aceite' || f === 'recusado') ? ' · resposta ' + dataPT(s.respostaEm) : ''}</div>
+    ${f === 'enviado' && dEnv >= 3 ? `<div class="lembrete">⏰ Enviado há ${dEnv} dias — perguntar ao cliente?</div>` : ''}
+    ${f === 'pedido' && diasDesde(s.pedidoEm) >= 2 ? `<div class="lembrete">⏰ Pedido há ${diasDesde(s.pedidoEm)} dias — falta enviar</div>` : ''}
+    ${ocupado.length ? `<div class="choque">⚠️ Esse dia já está ocupado: ${ocupado.map(x => esc(x.evento || 'evento')).join(', ')}</div>` : ''}
+    <div class="btns">${botoes}</div>${f === 'pedido' || f === 'enviado' ? htmlContacto(s.telefone) : ''}</div>`;
+}
+function renderOrcamentos() {
+  if (!$('listaOrc')) return;
+  const grupos = { pedido: [], enviado: [], aceite: [], recusado: [] };
+  for (const s of S.servicos) { const f = faseDe(s); if (f) grupos[f].push(s); }
+  grupos.pedido.sort((a, b) => (a.pedidoEm || a.data || '').localeCompare(b.pedidoEm || b.data || ''));
+  grupos.enviado.sort((a, b) => (a.data || '9').localeCompare(b.data || '9'));
+  grupos.aceite.sort((a, b) => (b.respostaEm || b.data || '').localeCompare(a.respostaEm || a.data || ''));
+  grupos.recusado.sort((a, b) => (b.respostaEm || '').localeCompare(a.respostaEm || ''));
+  const nomes = { pedido: 'Pedidos', enviado: 'Enviados', aceite: 'Aceites', recusado: 'Recusados' };
+  $('orcFiltro').innerHTML = Object.keys(nomes).map(k => `<button data-of="${k}" class="${orcFiltro === k ? 'on' : ''}">${nomes[k]}${grupos[k].length ? ` (${grupos[k].length})` : ''}</button>`).join('');
+  const vazio = { pedido: 'Sem pedidos por responder.<br>Quando um cliente pedir orçamento, carrega no +.', enviado: 'Nenhum orçamento à espera de resposta.', aceite: 'Ainda nenhum orçamento aceite.', recusado: 'Nenhum orçamento recusado.' };
+  $('listaOrc').innerHTML = grupos[orcFiltro].length ? grupos[orcFiltro].slice(0, 60).map(cartaoOrc).join('') : `<div class="empty">${vazio[orcFiltro]}</div>`;
+}
+$('orcFiltro').onclick = e => { const b = e.target.closest('[data-of]'); if (b) { orcFiltro = b.dataset.of; renderOrcamentos(); } };
+// ações dos cartões (Orçamentos e Agenda)
+document.addEventListener('click', async e => {
+  if (e.target.closest('[data-link]')) return;
+  const el = e.target.closest('[data-enviar],[data-aceitar],[data-recusar],[data-reabrir],[data-abrir],[data-veragenda]'); if (!el) return;
+  const id = el.dataset.enviar || el.dataset.aceitar || el.dataset.recusar || el.dataset.reabrir || el.dataset.abrir || el.dataset.veragenda;
+  const s = S.servicos.find(x => x.id === id); if (!s) return;
+  if (el.dataset.abrir) return formServico(s);
+  if (el.dataset.veragenda) { agSel = s.data; agMes = s.data.slice(0, 7); return irPara('agenda'); }
+  if (el.dataset.enviar) {
+    if (!num(s.recebido) && confirm('Este orçamento ainda não tem valor. Abrir para preencher?')) return formServico(s);
+    await guardar('servicos', { ...s, estado: 'orcamento', orcFase: 'enviado', enviadoEm: hoje() }); orcFiltro = 'enviado'; renderOrcamentos(); return toast('Marcado como enviado 📤');
+  }
+  if (el.dataset.aceitar) {
+    if (!s.data) { toast('Falta a data do evento — preenche e escolhe "Confirmado"', 'erro'); return formServico({ ...s }); }
+    await guardar('servicos', { ...s, estado: 'confirmado', orcFase: 'aceite', respostaEm: hoje(), pago: num(s.pago) });
+    toast('Aceite! Já está na Agenda ✓'); orcFiltro = 'aceite'; renderOrcamentos();
+    if (confirm('O cliente já pagou algum sinal? Carrega OK para registar.')) formServico(S.servicos.find(x => x.id === s.id));
+    return;
+  }
+  if (el.dataset.recusar) {
+    if (!confirm(`O cliente não aceitou "${s.evento || 'este orçamento'}"? Passa para Recusados.`)) return;
+    await guardar('servicos', { ...s, estado: 'cancelado', orcFase: 'recusado', respostaEm: hoje() }); return toast('Passou para Recusados');
+  }
+  if (el.dataset.reabrir) { await guardar('servicos', { ...s, estado: 'orcamento', orcFase: 'enviado', respostaEm: '' }); orcFiltro = 'enviado'; renderOrcamentos(); return toast('Orçamento reaberto'); }
+});
 
 // ── AGENDA ──
 let agMes = hoje().slice(0, 7), agSel = hoje();
@@ -711,16 +800,17 @@ function cartaoEvento(s, comBotoesOrc) {
   return `<div class="ev" data-serv="${esc(s.id)}">
     <div class="top"><span class="t">${esc(s.evento || 'Sem nome')}</span><span class="estado ${et.cls}">${et.txt}</span></div>
     <div class="m">${comBotoesOrc ? `${s.data ? '📅 ' + dataLonga(s.data) : 'Sem data'}${s.hora ? ' · ' + s.hora : ''} · ` : (s.hora ? '🕒 ' + s.hora + (num(s.duracao) ? ` (${fmtIn(num(s.duracao))} h)` : '') + ' · ' : '')}${eur(s.recebido)}${num(s.fotos) ? ' · ' + fotosN(num(s.fotos)) + ' fotos' : ''}${s.localidade ? ' · 📍 ' + esc(s.localidade) : ''}${L.receber ? ' · falta receber ' + eur(L.receber) : ''}</div>
-    <div class="btns">${estadoDe(s) === 'orcamento' ? `<button class="sim" data-marcou="${esc(s.id)}">✓ Marcou</button><button class="nao" data-naomarcou="${esc(s.id)}">✗ Não marcou</button>` : ''}
+    <div class="btns">${faseDe(s) === 'enviado' ? `<button class="sim" data-aceitar="${esc(s.id)}">✓ Aceite</button><button class="nao" data-recusar="${esc(s.id)}">✗ Recusado</button>` : faseDe(s) === 'pedido' ? `<button class="sim" data-enviar="${esc(s.id)}">📤 Enviado</button>` : ''}
       <button data-abrir="${esc(s.id)}">Abrir</button>${s.data ? `<a href="${esc(linkCalendario(s))}" ${eIOS ? `download="memorybox-${esc(s.data)}.ics"` : 'target="_blank" rel="noopener"'} data-link>📅 No calendário</a>` : ''}</div>
     ${htmlContacto(s.telefone)}</div>`;
 }
 function renderAgenda() {
   if (!$('cal')) return;
   const h = hoje();
-  // orçamentos à espera de resposta
-  const orc = S.servicos.filter(s => estadoDe(s) === 'orcamento' && (!s.data || s.data >= h)).sort((a, b) => (a.data || '9').localeCompare(b.data || '9'));
-  $('agOrc').innerHTML = orc.length ? `<h2 style="margin-top:4px">À espera de resposta (${orc.length})</h2>` + orc.map(s => cartaoEvento(s, true)).join('') : '';
+  // atalho para os orçamentos em aberto
+  const abertos = S.servicos.filter(s => estadoDe(s) === 'orcamento');
+  $('agOrc').innerHTML = abertos.length ? `<button class="btn block" id="agIrOrc" style="margin-bottom:12px;background:#e7e3f3;color:#5b4a8a">📋 ${abertos.length} orçamento${abertos.length > 1 ? 's' : ''} em aberto — ver</button>` : '';
+  if ($('agIrOrc')) $('agIrOrc').onclick = () => { orcFiltro = abertos.some(s => faseDe(s) === 'enviado') ? 'enviado' : 'pedido'; irPara('orcamentos'); };
   // calendário
   const [a, m] = agMes.split('-').map(Number), primeiro = new Date(a, m - 1, 1), offset = (primeiro.getDay() + 6) % 7, diasMes = new Date(a, m, 0).getDate();
   $('calTitulo').textContent = `${MESES_L[m - 1]} ${a}`;
@@ -736,38 +826,38 @@ function renderAgenda() {
   const evs = doDia(agSel);
   $('agDiaTit').textContent = dataLonga(agSel);
   $('agDia').innerHTML = (evs.length > 1 ? `<div class="choque" style="margin-bottom:10px">⚠️ ${evs.length} eventos neste dia.</div>` : '')
-    + (evs.length ? evs.map(s => cartaoEvento(s, false)).join('') : `<div class="empty" style="padding:18px 10px">Nada marcado.<br>Carrega no + para criar um orçamento neste dia.</div>`);
+    + (evs.length ? evs.map(s => cartaoEvento(s, false)).join('') : `<div class="empty" style="padding:18px 10px">Nada marcado.<br>Carrega no + para marcar um evento neste dia.</div>`);
 }
 $('cal').onclick = e => { const b = e.target.closest('[data-dia]'); if (!b) return; agSel = b.dataset.dia; if (agSel.slice(0, 7) !== agMes) agMes = agSel.slice(0, 7); renderAgenda(); };
 const mudarMes = n => { let [a, m] = agMes.split('-').map(Number); m += n; if (m < 1) { m = 12; a--; } if (m > 12) { m = 1; a++; } agMes = `${a}-${String(m).padStart(2, '0')}`; renderAgenda(); };
 $('calAnt').onclick = () => mudarMes(-1); $('calSeg').onclick = () => mudarMes(1);
 $('calHoje').onclick = () => { agSel = hoje(); agMes = agSel.slice(0, 7); renderAgenda(); };
-$('v-agenda').onclick = async e => {
-  if (e.target.closest('[data-link]')) return;
-  const sim = e.target.closest('[data-marcou]'), nao = e.target.closest('[data-naomarcou]'), abrir = e.target.closest('[data-abrir]');
-  if (sim) { const s = S.servicos.find(x => x.id === sim.dataset.marcou); if (!s) return;
-    await guardar('servicos', { ...s, estado: 'confirmado', pago: num(s.pago) }); toast('Marcado! Já conta nos totais e na agenda ✓');
-    if (s.data) { agSel = s.data; agMes = s.data.slice(0, 7); renderAgenda(); }
-    if (confirm('O cliente já pagou algum sinal? Carrega OK para abrir o serviço e registar.')) formServico(S.servicos.find(x => x.id === s.id)); return; }
-  if (nao) { const s = S.servicos.find(x => x.id === nao.dataset.naomarcou); if (!s) return;
-    if (confirm(`Marcar "${s.evento || 'este orçamento'}" como cancelado (o cliente não marcou)?`)) { await guardar('servicos', { ...s, estado: 'cancelado' }); toast('Orçamento arquivado como cancelado'); } return; }
-  if (abrir) formServico(S.servicos.find(x => x.id === abrir.dataset.abrir));
-};
+
 
 // ── NAVEGAÇÃO ──
 let vista = 'resumo';
-document.querySelectorAll('nav button').forEach(b => b.onclick = () => irPara(b.dataset.v));
+const EM_MAIS = ['compras', 'historico', 'config'];
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => b.dataset.v === 'mais' ? abrirMais() : irPara(b.dataset.v));
+function abrirMais() {
+  abrirFolha(`<h3>Mais</h3><div class="mais-grid"><button data-ir="compras"><svg viewBox="0 0 24 24"><path d="M5 7h14l-1.5 12h-11z"/><path d="M9 7a3 3 0 016 0"/></svg><span>Compras<small>Rolos e outras despesas</small></span></button><button data-ir="historico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Histórico<small>Todos os movimentos e quem os fez</small></span></button><button data-ir="config"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg><span>Ajustes<small>Rolos, carros, combustível, sócias, cópias</small></span></button></div>`);
+  $('sheetBody').querySelectorAll('[data-ir]').forEach(b => b.onclick = () => { fecharFolha(); irPara(b.dataset.ir); });
+}
 function irPara(v) {
   vista = v;
-  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.v === v));
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.v === v || (b.dataset.v === 'mais' && EM_MAIS.includes(v))));
   document.querySelectorAll('.view').forEach(s => s.classList.toggle('active', s.id === 'v-' + v));
-  $('fab').style.display = (v === 'servicos' || v === 'compras' || v === 'agenda') ? 'block' : 'none';
+  $('fab').style.display = ['servicos', 'compras', 'agenda', 'orcamentos'].includes(v) ? 'block' : 'none';
   if (v === 'agenda') renderAgenda();
+  if (v === 'orcamentos') renderOrcamentos();
   if (v === 'config') { cfgSujo = false; renderConfig(); }
   window.scrollTo(0, 0);
 }
-$('fab').onclick = () => vista === 'servicos' ? formServico() : vista === 'agenda' ? formServico({ data: agSel >= hoje() ? agSel : hoje(), estado: 'orcamento', pago: 0 }) : formCompra();
+$('fab').onclick = () => vista === 'servicos' ? formServico()
+  : vista === 'agenda' ? formServico({ data: agSel >= hoje() ? agSel : hoje(), estado: 'confirmado', pago: 0 })
+  : vista === 'orcamentos' ? formServico({ data: '', estado: 'orcamento', orcFase: 'pedido', pago: 0, pedidoEm: hoje() })
+  : formCompra();
 $('listaServicos').onclick = e => { if (e.target.closest('[data-link]')) return; const b = e.target.closest('[data-serv]'); if (b) formServico(S.servicos.find(s => s.id === b.dataset.serv)); };
+$('r-orc-box').onclick = () => irPara('orcamentos');
 $('r-prox').onclick = e => { const b = e.target.closest('[data-serv]'); if (b) formServico(S.servicos.find(s => s.id === b.dataset.serv)); };
 $('listaCompras').onclick = e => { const b = e.target.closest('[data-comp]'); if (b) formCompra(S.compras.find(c => c.id === b.dataset.comp)); };
 
@@ -785,6 +875,7 @@ function formServico(s) {
   const pagoIni = s.pago == null ? (novo && estadoDe(s) === 'confirmado' ? s.recebido : (novo ? '' : s.recebido)) : s.pago;
   abrirFolha(`<h3>${novo ? 'Novo serviço' : 'Editar serviço'}</h3>
     <div class="seg" id="fEstado" style="margin-bottom:4px">${Object.entries(ESTADOS).map(([k, v]) => `<button type="button" data-e="${k}" class="${estadoDe(s) === k ? 'on' : ''}">${v}</button>`).join('')}</div>
+    <div class="seg" id="fFase" style="margin-top:8px">${['pedido', 'enviado'].map(k => `<button type="button" data-f="${k}" class="${(faseDe(s) || 'pedido') === k ? 'on' : ''}">${FASES[k]}</button>`).join('')}</div>
     <div class="hint" id="fEstadoHint"></div>
     <div class="two"><div><label>Data</label><input type="date" id="fData" value="${esc(s.data)}"></div>
     <div class="two" style="gap:8px"><div><label>Hora</label><input type="time" id="fHora" value="${esc(s.hora || '')}"></div>
@@ -815,7 +906,7 @@ function formServico(s) {
     const tmp = { ...s, id: s.id || '__novo', criado: s.criado || Date.now(), data: $('fData').value, roloId: $('fRolo').value, recebido: num($('fRec').value), fotos: num($('fFotos').value), abater: num($('fAbater').value), custoDesloc: dsl.custo, estado: estadoAtual, pago: num($('fPago').value) };
     const outros = tmp.data ? S.servicos.filter(x => x.id !== s.id && x.data === tmp.data && estadoDe(x) !== 'cancelado') : [];
     $('fChoque').innerHTML = outros.length && estadoAtual !== 'cancelado' ? `<div class="choque">⚠️ Já têm neste dia: ${outros.map(x => `<b>${esc(x.evento || 'evento')}</b>${x.hora ? ' às ' + x.hora : ''} (${etiqueta(x).txt.toLowerCase()})`).join(', ')}.</div>` : '';
-    $('fEstadoHint').textContent = estadoAtual === 'orcamento' ? 'Orçamento: ainda não conta nos totais nem no stock. Muda para Confirmado quando o cliente aceitar.' : estadoAtual === 'cancelado' ? 'Cancelado: não conta nos totais.' : '';
+    $('fEstadoHint').textContent = estadoAtual === 'orcamento' ? 'Orçamento: fica no separador Orçamentos e não conta nos totais. Quando o cliente aceitar, escolhe Confirmado.' : estadoAtual === 'cancelado' ? 'Cancelado: não conta nos totais.' : '';
     const falta = r2(tmp.recebido - tmp.pago);
     $('fPagoHint').textContent = estadoAtual !== 'confirmado' ? '' : falta > 0 ? `Falta receber ${eur(falta)}.` : tmp.recebido ? 'Tudo recebido ✔' : '';
     const sx = stockRolos().find(x => x.rolo.id === tmp.roloId), jaConta = !novo && ativo(s) && s.roloId === tmp.roloId ? num(s.fotos) : 0;
@@ -834,9 +925,13 @@ function formServico(s) {
       <div class="row"><span class="k">Fica para dividir</span><span class="v">${eur(L.dividir)}</span></div>
       <div class="row"><span class="k">${esc(P[0])} / ${esc(P[1])}</span><span class="v">${eur(L.p1)} / ${eur(L.p2)}</span></div>`;
   };
-  let estadoAtual = estadoDe(s);
+  let estadoAtual = estadoDe(s), faseAtual = faseDe(s) === 'enviado' ? 'enviado' : 'pedido';
+  const mostrarFase = () => { $('fFase').style.display = estadoAtual === 'orcamento' ? 'flex' : 'none'; };
   $('fEstado').onclick = e => { const b = e.target.closest('[data-e]'); if (!b) return; estadoAtual = b.dataset.e;
-    $('fEstado').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); prev(); };
+    $('fEstado').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); mostrarFase(); prev(); };
+  $('fFase').onclick = e => { const b = e.target.closest('[data-f]'); if (!b) return; faseAtual = b.dataset.f;
+    $('fFase').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); };
+  mostrarFase();
   const telAcoes = () => { $('fTelAcoes').innerHTML = htmlContacto($('fTel').value); };
   $('fTel').oninput = telAcoes; telAcoes();
   // serviço novo já realizado: por defeito considera-se tudo recebido (até mexeres no campo)
@@ -849,12 +944,17 @@ function formServico(s) {
   $('fPago').oninput = () => { pagoTocado = true; prev(); }; prev();
   $('fOk').onclick = async () => {
     const rolo = S.config.rolos.find(r => r.id === $('fRolo').value);
-    const reg = { id: s.id || uid(), criado: s.criado || Date.now(), data: $('fData').value || hoje(), evento: $('fEvento').value.trim(),
+    const reg = { id: s.id || uid(), criado: s.criado || Date.now(), data: $('fData').value || (estadoAtual === 'orcamento' ? '' : hoje()), evento: $('fEvento').value.trim(),
       recebido: num($('fRec').value), fotos: Math.round(num($('fFotos').value)), roloId: $('fRolo').value,
       roloNome: rolo?.nome || '', custoFotoGuardado: custoFoto(rolo), abater: num($('fAbater').value), obs: $('fObs').value.trim() };
     const km = kmValidos(), dsl = custoDeslocacao(km, $('fCarro').value, $('fDesl').value);
     Object.assign(reg, { localidade: $('fLocal').value.trim(), km, kmMin: km ? kmEst.min : null, kmAprox: km ? kmEst.aprox : false, kmNome: km ? kmEst.nome : '',
       carroId: $('fCarro').value, carroNome: dsl.carro?.nome || '', deslocacoes: dsl.n, custoDesloc: r2(dsl.custo) });
+    if (estadoAtual === 'orcamento') { reg.orcFase = faseAtual; if (faseAtual === 'enviado' && !s.enviadoEm) reg.enviadoEm = hoje(); if (!s.pedidoEm) reg.pedidoEm = s.pedidoEm || hoje(); }
+    else if (s.orcFase || estadoDe(s) === 'orcamento') { const veio = s.orcFase || 'enviado';
+      reg.orcFase = estadoAtual === 'confirmado' ? 'aceite' : (veio === 'aceite' ? 'aceite' : 'recusado');
+      if (estadoDe(s) === 'orcamento') reg.respostaEm = hoje(); }
+    if (estadoAtual === 'confirmado' && !$('fData').value) return toast('Falta a data do evento', 'erro');
     Object.assign(reg, { estado: estadoAtual, pago: num($('fPago').value), telefone: $('fTel').value.trim(), hora: $('fHora').value || '', duracao: num($('fDur').value) || '' });
     if (reg.pago > reg.recebido && reg.recebido && !confirm('O valor já recebido é maior do que o valor do serviço. Guardar assim?')) return;
     if (reg.localidade && !km && !confirm('Ainda não calculaste os km desta localidade. Guardar sem custo de deslocação?')) return;
@@ -916,7 +1016,7 @@ function simulador() {
   $('sCriar').onclick = () => {
     const r = calc(); fecharFolha();
     setTimeout(() => formServico({ localidade: $('sLocal')?.value || simUltimo.local, km: r.km, kmMin: simUltimo.min, kmAprox: simUltimo.aprox, kmNome: simUltimo.nome,
-      carroId: $('sCarro')?.value || simVals.carroId, deslocacoes: r.n, fotos: r.fotos || '', roloId: simVals.roloId, recebido: r.preco ? r2(r.preco) : '', estado: 'orcamento', pago: 0 }), 250);
+      carroId: $('sCarro')?.value || simVals.carroId, deslocacoes: r.n, fotos: r.fotos || '', roloId: simVals.roloId, recebido: r.preco ? r2(r.preco) : '', estado: 'orcamento', orcFase: 'pedido', pedidoEm: hoje(), data: '', pago: 0 }), 250);
   };
 }
 $('btnSim').onclick = simulador;
@@ -1041,7 +1141,7 @@ const fmtV = (v, f) => (v === '' || v == null) ? '—' : (f ? f(v) : String(v));
 function camposDe(col) {
   const P = S.config.pessoas;
   return col === 'servicos'
-    ? [['estado', 'Estado', v => ESTADOS[v] || v], ['data', 'Data', dataPT], ['hora', 'Hora'], ['duracao', 'Duração (h)'], ['evento', 'Evento'], ['telefone', 'Telefone'], ['pago', 'Já recebido', eur], ['recebido', 'Recebido', eur], ['fotos', 'Nº fotos'], ['roloId', 'Rolo', id => (S.config.rolos.find(r => r.id === id) || {}).nome || id], ['localidade', 'Localidade'], ['km', 'Km (ida)', v => String(v).replace('.', ',') + ' km'], ['carroNome', 'Carro'], ['deslocacoes', 'Deslocações'], ['custoDesloc', 'Custo deslocação', eur], ['abater', 'Quero abater', eur], ['obs', 'Observação']]
+    ? [['estado', 'Estado', v => ESTADOS[v] || v], ['orcFase', 'Orçamento', v => FASES[v] || v], ['data', 'Data', dataPT], ['hora', 'Hora'], ['duracao', 'Duração (h)'], ['evento', 'Evento'], ['telefone', 'Telefone'], ['pago', 'Já recebido', eur], ['recebido', 'Recebido', eur], ['fotos', 'Nº fotos'], ['roloId', 'Rolo', id => (S.config.rolos.find(r => r.id === id) || {}).nome || id], ['localidade', 'Localidade'], ['km', 'Km (ida)', v => String(v).replace('.', ',') + ' km'], ['carroNome', 'Carro'], ['deslocacoes', 'Deslocações'], ['custoDesloc', 'Custo deslocação', eur], ['abater', 'Quero abater', eur], ['obs', 'Observação']]
     : [['data', 'Data', dataPT], ['tipo', 'Tipo'], ['descricao', 'Descrição'], ['total', 'Valor total', eur], ['quantidade', 'Nº de rolos'], ['p1', P[0], eur], ['p2', P[1], eur], ['obs', 'Observação']];
 }
 function diferencas(col, antes, depois) {
