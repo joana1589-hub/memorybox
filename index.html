@@ -26,7 +26,7 @@
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:16px}
 button,input,select,textarea{font:inherit;color:inherit}
 header{position:sticky;top:0;z-index:5;background:var(--brand);color:#fff;padding:calc(12px + env(safe-area-inset-top)) 16px 12px;display:flex;align-items:center;gap:10px}
-.btn-inst{border:0;border-radius:20px;padding:7px 12px;background:var(--accent);color:#fff;font-weight:700;font-size:13px;cursor:pointer;display:none}
+.btn-inst{border:0;border-radius:22px;padding:11px 14px;background:var(--accent);color:#fff;font-weight:700;font-size:13px;cursor:pointer;display:none}
 html.mostrar-instalar .btn-inst{display:inline-block}
 html.instalada .btn-inst{display:none!important}
 .passos{counter-reset:p;padding:0;margin:8px 0 0;list-style:none}
@@ -38,7 +38,7 @@ header h1 span{color:var(--accent)}
 .sync{font-size:12px;opacity:.8;display:flex;align-items:center;gap:6px}
 .dot{width:8px;height:8px;border-radius:50%;background:#9aa}
 .dot.on{background:#5fd39f}.dot.off{background:#f0b44c}
-main{padding:16px 16px calc(96px + env(safe-area-inset-bottom));max-width:720px;margin:0 auto}
+main{padding:16px 16px calc(170px + env(safe-area-inset-bottom));max-width:720px;margin:0 auto}
 .view{display:none}.view.active{display:block}
 h2{font-size:15px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:22px 4px 10px}
 h2:first-child{margin-top:4px}
@@ -73,7 +73,7 @@ h2:first-child{margin-top:4px}
 .btn.dark{background:var(--brand);color:#fff}
 .btn.del{background:transparent;color:var(--bad)}
 .btn.block{width:100%}
-.btn.sm{padding:7px 12px;font-size:14px}
+.btn.sm{padding:12px 14px;font-size:14.5px}
 .fab{position:fixed;right:18px;bottom:calc(82px + env(safe-area-inset-bottom));width:58px;height:58px;border-radius:50%;border:0;background:var(--accent);color:#fff;font-size:30px;box-shadow:0 6px 18px rgba(224,96,126,.45);cursor:pointer;z-index:6;display:none}
 nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:7}
 nav button{flex:1;border:0;background:none;padding:9px 2px 10px;font-size:11.5px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
@@ -81,11 +81,11 @@ nav button svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width
 nav button.active{color:var(--accent);font-weight:700}
 /* folha (formulário) */
 .sheet-bg{position:fixed;inset:0;background:rgba(20,10,25,.45);z-index:20;display:none}
-.sheet{position:fixed;left:0;right:0;bottom:0;max-height:92vh;overflow:auto;background:var(--bg);border-radius:20px 20px 0 0;z-index:21;padding:8px 16px calc(18px + env(safe-area-inset-bottom));transform:translateY(105%);visibility:hidden;transition:transform .22s ease,visibility 0s .22s;max-width:720px;margin:0 auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-height:92vh;overflow:auto;background:var(--bg);border-radius:20px 20px 0 0;z-index:21;padding:8px 16px 0;transform:translateY(105%);visibility:hidden;transition:transform .22s ease,visibility 0s .22s;max-width:720px;margin:0 auto}
 .sheet.open{transform:none;visibility:visible;transition:transform .22s ease}
 .grab{width:40px;height:5px;border-radius:3px;background:#cfc4cc;margin:4px auto 10px}
 .sheet h3{margin:4px 0 14px;font-size:19px;padding-right:44px}
-.fechar{position:absolute;top:14px;right:12px;width:38px;height:38px;border-radius:50%;border:0;background:var(--line);font-size:24px;line-height:1;cursor:pointer;color:var(--ink)}
+.fechar{position:absolute;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:0;background:var(--line);font-size:24px;line-height:1;cursor:pointer;color:var(--ink)}
 label{display:block;font-size:13px;color:var(--muted);margin:12px 0 5px}
 input,select,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:16px}
 input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-color:transparent}
@@ -93,13 +93,17 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-c
 .preview{background:var(--card);border-radius:14px;padding:6px 14px;margin-top:14px}
 .hint{font-size:12.5px;color:var(--muted);margin-top:5px}
 .actions{display:flex;gap:10px;margin-top:18px}
+.sheet .actions{position:sticky;bottom:0;background:var(--bg);margin:18px -16px 0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));box-shadow:0 -6px 12px -8px rgba(43,29,51,.25)}
+.sheet .actions .btn{padding:14px 16px}
 .actions .btn{flex:1}
 .toast{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;z-index:40;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1}.toast.erro{background:var(--bad)}
-.edit-line{display:grid;grid-template-columns:1fr 92px 34px;gap:8px;align-items:center;margin-bottom:8px}
-.edit-line.rolo{grid-template-columns:1fr 84px 74px 34px}
+.edit-line{display:grid;grid-template-columns:1fr 100px 40px;gap:8px;align-items:center;margin-bottom:8px}
+.rolo-bloco{border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:12px}
+.edit-line.rolo{grid-template-columns:1fr 1fr 40px;align-items:end;margin-top:6px}
+label.mini{font-size:12px;margin:0;color:var(--muted)}label.mini input{margin-top:3px;color:var(--ink)}
 .edit-line input{padding:10px}
-.x{border:0;background:none;color:var(--bad);font-size:22px;cursor:pointer}
+.x{border:0;background:none;color:var(--bad);font-size:24px;cursor:pointer;width:40px;height:44px;border-radius:10px}.x:active{background:#f9dedb}
 .small-head{display:grid;gap:8px;font-size:12px;color:var(--muted);margin:0 0 4px}
 .login{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;background:var(--brand);color:#fff}
 .login h1{font-size:30px;margin:14px 0 6px}.login h1 span{color:var(--accent)}
@@ -107,12 +111,12 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-c
 .login img{width:96px;height:96px;border-radius:22px}
 .how{font-size:14px;color:var(--muted);line-height:1.5}
 .seg{display:flex;background:var(--line);border-radius:12px;padding:3px;margin-bottom:12px}
-.seg button{flex:1;border:0;background:none;padding:8px;border-radius:10px;font-weight:600;color:var(--muted);cursor:pointer}
+.seg button{flex:1;border:0;background:none;padding:11px 6px;border-radius:10px;font-weight:600;color:var(--muted);cursor:pointer}
 .seg button.on{background:#fff;color:var(--ink)}
 .kmline{display:flex;gap:8px}.kmline input{flex:1}
 .kminfo{font-size:13px;margin-top:6px;color:var(--muted)}.kminfo a{color:var(--accent);font-weight:600;text-decoration:none}
 .kminfo.ok{color:var(--ok)}.kminfo.erro{color:var(--bad)}
-.edit-line.carro{grid-template-columns:1fr 110px 34px}
+.edit-line.carro{grid-template-columns:1fr 100px 40px}
 .sugest{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
 .sugest div{background:var(--bg);border-radius:12px;padding:8px;text-align:center;font-size:12.5px;color:var(--muted)}
 .sugest b{display:block;font-size:16px;color:var(--ink)}
@@ -129,7 +133,9 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-c
 .tag{font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:20px;margin-right:6px;text-transform:uppercase;letter-spacing:.3px}
 .tag.criou{background:var(--ok-soft);color:var(--ok)}.tag.alterou{background:var(--warn-soft);color:var(--warn)}
 .tag.apagou{background:#f9dedb;color:var(--bad)}.tag.importou{background:var(--accent-soft);color:#a83a55}
-nav button{font-size:11px}
+nav button{font-size:12px}
+.btn-inst{white-space:nowrap}
+@media (max-width:400px){.sync span{display:none}}
 </style>
 </head>
 <body>
@@ -211,7 +217,6 @@ nav button{font-size:11px}
   <section class="view" id="v-config">
     <h2>Rolos</h2>
     <div class="card">
-      <div class="small-head" style="grid-template-columns:1fr 84px 74px 34px"><span>Nome</span><span>Preço (€)</span><span>Fotos/rolo</span><span></span></div>
       <div id="cfgRolos"></div>
       <button class="btn sm" id="addRolo">+ Adicionar rolo</button>
     </div>
@@ -220,7 +225,7 @@ nav button{font-size:11px}
     <div class="card">
       <label style="margin-top:0">Pago por</label>
       <select id="cfgInvPor"></select>
-      <div class="small-head" style="grid-template-columns:1fr 92px 34px;margin-top:12px"><span>Item</span><span>Valor (€)</span><span></span></div>
+      <div class="small-head" style="grid-template-columns:1fr 100px 40px;margin-top:12px"><span>Item</span><span>Valor (€)</span><span></span></div>
       <div id="cfgInv"></div>
       <button class="btn sm" id="addInv">+ Adicionar item</button>
       <div class="row" style="margin-top:8px"><span class="k">Total</span><span class="v" id="cfgInvTotal"></span></div>
@@ -230,7 +235,7 @@ nav button{font-size:11px}
     <div class="card">
       <label style="margin-top:0">Ponto de partida</label><input id="cfgBase" placeholder="Casal Comba, Mealhada">
       <label>Preço do combustível (€/L)</label><input id="cfgComb" inputmode="decimal" placeholder="Ex.: 1,65">
-      <div class="small-head" style="grid-template-columns:1fr 110px 34px;margin-top:14px"><span>Carro</span><span>Média (L/100km)</span><span></span></div>
+      <div class="small-head" style="grid-template-columns:1fr 100px 40px;margin-top:14px"><span>Carro</span><span>Média L/100</span><span></span></div>
       <div id="cfgCarros"></div>
       <button class="btn sm" id="addCarro">+ Adicionar carro</button>
       <div class="hint">A média é o consumo do carro em litros aos 100 km (ex.: 5,5).</div>
@@ -266,7 +271,7 @@ nav button{font-size:11px}
   <button data-v="servicos"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/></svg>Serviços</button>
   <button data-v="compras"><svg viewBox="0 0 24 24"><path d="M5 7h14l-1.5 12h-11z"/><path d="M9 7a3 3 0 016 0"/></svg>Compras</button>
   <button data-v="historico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Histórico</button>
-  <button data-v="config"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>Configuração</button>
+  <button data-v="config"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>Ajustes</button>
 </nav>
 </div>
 
@@ -343,6 +348,7 @@ const r2 = n => Math.round((n + Number.EPSILON) * 100) / 100;
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const hoje = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
+const fmtIn = v => (v === '' || v == null || v === 0) ? (v === 0 ? '0' : '') : String(v).replace('.', ',');
 const dataPT = iso => iso ? iso.split('-').reverse().join('/') : '—';
 function toast(msg, tipo) { const t = $('toast'); t.textContent = msg; t.className = 'toast show' + (tipo ? ' ' + tipo : ''); clearTimeout(t._h); t._h = setTimeout(() => t.className = 'toast', 2600); }
 
@@ -381,7 +387,7 @@ function custoDeslocacao(km, carroId, deslocacoes) {
   const kmTotal = num(km) * 2 * n;
   if (!num(km) || !carro) return { kmTotal: carro ? kmTotal : 0, litros: 0, custo: 0, carro, n, aviso: !num(km) ? '' : 'Escolhe o carro' };
   const litros = kmTotal * num(carro.consumo) / 100, custo = litros * S.config.precoComb;
-  const aviso = !num(carro.consumo) ? `Falta a média do ${carro.nome} (Configuração)` : !S.config.precoComb ? 'Falta o preço do combustível (Configuração)' : '';
+  const aviso = !num(carro.consumo) ? `Falta a média do ${carro.nome} (Ajustes)` : !S.config.precoComb ? 'Falta o preço do combustível (Ajustes)' : '';
   return { kmTotal, litros, custo, carro, n, aviso };
 }
 const fmtKm = d => d && num(d.km) ? `${d.aprox ? '≈ ' : ''}${num(d.km).toLocaleString('pt-PT', { maximumFractionDigits: 1 })} km${d.min ? ` · ${d.min} min` : ''}` : '';
@@ -530,13 +536,13 @@ function formServico(s) {
     <div class="two"><div><label>Data</label><input type="date" id="fData" value="${esc(s.data)}"></div>
     <div><label>Rolo</label><select id="fRolo">${S.config.rolos.map(r => `<option value="${esc(r.id)}" ${r.id === s.roloId ? 'selected' : ''}>${esc(r.nome)}</option>`).join('')}</select></div></div>
     <label>Evento / Cliente</label><input id="fEvento" value="${esc(s.evento)}" placeholder="Ex.: Casamento Ana & Rui">
+    <div class="two"><div><label>Recebido (€)</label><input id="fRec" inputmode="decimal" value="${esc(fmtIn(s.recebido))}"></div>
+    <div><label>Nº de fotos</label><input id="fFotos" inputmode="numeric" value="${esc(s.fotos)}"></div></div>
     <label>Localidade do serviço</label>${htmlKm('f', s.localidade)}
     <div class="two"><div><label>Carro</label>${htmlCarros('fCarro', s.carroId)}</div>
     <div><label>Nº de deslocações</label><input id="fDesl" inputmode="numeric" value="${esc(s.deslocacoes || 1)}"></div></div>
-    <div class="hint">Cada deslocação conta ida e volta${S.config.carros.length ? '' : ' · <b>Ainda não há carros — adiciona-os na Configuração</b>'}.</div>
-    <div class="two"><div><label>Recebido (€)</label><input id="fRec" inputmode="decimal" value="${esc(s.recebido)}"></div>
-    <div><label>Nº de fotos</label><input id="fFotos" inputmode="numeric" value="${esc(s.fotos)}"></div></div>
-    <label>Quero abater ao investimento (€)</label><input id="fAbater" inputmode="decimal" value="${esc(s.abater)}" placeholder="0">
+    <div class="hint">Cada deslocação conta ida e volta${S.config.carros.length ? '' : ' · <b>Ainda não há carros — adiciona-os em Ajustes</b>'}.</div>
+    <label>Quero abater ao investimento (€)</label><input id="fAbater" inputmode="decimal" value="${esc(fmtIn(s.abater))}" placeholder="0">
     <div class="hint" id="fFaltaHint"></div>
     <label>Observação</label><input id="fObs" value="${esc(s.obs)}">
     <div class="preview" id="fPrev"></div>
@@ -639,18 +645,18 @@ function formCompra(c) {
     <div class="two"><div><label>Data</label><input type="date" id="cData" value="${esc(c.data)}"></div>
     <div><label>Tipo</label><select id="cTipo">${tipos.map(t => `<option ${t === c.tipo ? 'selected' : ''}>${t}</option>`).join('')}</select></div></div>
     <label>Descrição</label><input id="cDesc" value="${esc(c.descricao)}" placeholder="Ex.: Rolo 10x15">
-    <label>Valor total (€)</label><input id="cTotal" inputmode="decimal" value="${esc(c.total)}">
+    <label>Valor total (€)</label><input id="cTotal" inputmode="decimal" value="${esc(fmtIn(c.total))}">
     <div class="seg" style="margin-top:12px"><button id="cMeias" type="button">A meias</button><button id="cSo1" type="button">Só ${esc(P[0])}</button><button id="cSo2" type="button">Só ${esc(P[1])}</button></div>
-    <div class="two"><div><label style="margin-top:0">${esc(P[0])} (€)</label><input id="cP1" inputmode="decimal" value="${esc(c.p1)}"></div>
-    <div><label style="margin-top:0">${esc(P[1])} (€)</label><input id="cP2" inputmode="decimal" value="${esc(c.p2)}"></div></div>
+    <div class="two"><div><label style="margin-top:0">${esc(P[0])} (€)</label><input id="cP1" inputmode="decimal" value="${esc(fmtIn(c.p1))}"></div>
+    <div><label style="margin-top:0">${esc(P[1])} (€)</label><input id="cP2" inputmode="decimal" value="${esc(fmtIn(c.p2))}"></div></div>
     <div class="hint" id="cAviso"></div>
     <label>Observação</label><input id="cObs" value="${esc(c.obs)}">
     <div class="actions">${novo ? '' : '<button class="btn del" id="cDel">Apagar</button>'}<button class="btn pri" id="cOk">Guardar</button></div>`);
   const aviso = () => { const d = r2(num($('cTotal').value) - num($('cP1').value) - num($('cP2').value)); $('cAviso').textContent = d ? `Atenção: a soma das duas é diferente do total (diferença ${eur(d)}).` : ''; };
   const t = () => num($('cTotal').value);
-  $('cMeias').onclick = () => { $('cP1').value = r2(t() / 2); $('cP2').value = r2(t() - r2(t() / 2)); aviso(); };
-  $('cSo1').onclick = () => { $('cP1').value = r2(t()); $('cP2').value = 0; aviso(); };
-  $('cSo2').onclick = () => { $('cP1').value = 0; $('cP2').value = r2(t()); aviso(); };
+  $('cMeias').onclick = () => { $('cP1').value = fmtIn(r2(t() / 2)); $('cP2').value = fmtIn(r2(t() - r2(t() / 2))); aviso(); };
+  $('cSo1').onclick = () => { $('cP1').value = fmtIn(r2(t())); $('cP2').value = '0'; aviso(); };
+  $('cSo2').onclick = () => { $('cP1').value = '0'; $('cP2').value = fmtIn(r2(t())); aviso(); };
   ['cTotal', 'cP1', 'cP2'].forEach(i => $(i).oninput = aviso); aviso();
   $('cOk').onclick = async () => {
     const reg = { id: c.id || uid(), data: $('cData').value || hoje(), tipo: $('cTipo').value, descricao: $('cDesc').value.trim(),
@@ -670,12 +676,13 @@ function renderConfig() {
 }
 function desenharCfg() {
   const c = cfgRascunho;
-  $('cfgRolos').innerHTML = c.rolos.map((r, i) => `<div class="edit-line rolo">
-    <input data-r="${i}" data-f="nome" value="${esc(r.nome)}"><input data-r="${i}" data-f="preco" inputmode="decimal" value="${esc(r.preco)}">
-    <input data-r="${i}" data-f="fotos" inputmode="numeric" value="${esc(r.fotos)}"><button class="x" data-rdel="${i}">×</button></div>
-    <div class="hint" style="margin:-4px 0 10px">Custo por foto: ${eur4(custoFoto({ preco: num(r.preco), fotos: num(r.fotos) }))}</div>`).join('');
+  $('cfgRolos').innerHTML = c.rolos.map((r, i) => `<div class="rolo-bloco">
+    <input data-r="${i}" data-f="nome" value="${esc(r.nome)}" placeholder="Nome do rolo">
+    <div class="edit-line rolo"><label class="mini">Preço (€)<input data-r="${i}" data-f="preco" inputmode="decimal" value="${esc(fmtIn(r.preco))}"></label>
+    <label class="mini">Fotos por rolo<input data-r="${i}" data-f="fotos" inputmode="numeric" value="${esc(r.fotos)}"></label><button class="x" data-rdel="${i}" aria-label="Remover rolo">×</button></div>
+    <div class="hint">Custo por foto: ${eur4(custoFoto({ preco: num(r.preco), fotos: num(r.fotos) }))}</div></div>`).join('');
   $('cfgInv').innerHTML = c.investimento.map((it, i) => `<div class="edit-line">
-    <input data-i="${i}" data-f="nome" value="${esc(it.nome)}"><input data-i="${i}" data-f="valor" inputmode="decimal" value="${esc(it.valor)}">
+    <input data-i="${i}" data-f="nome" value="${esc(it.nome)}"><input data-i="${i}" data-f="valor" inputmode="decimal" value="${esc(fmtIn(it.valor))}">
     <button class="x" data-idel="${i}">×</button></div>`).join('');
   $('cfgInvTotal').textContent = eur(c.investimento.reduce((a, i) => a + num(i.valor), 0));
   $('cfgP1').value = c.pessoas[0]; $('cfgP2').value = c.pessoas[1];
