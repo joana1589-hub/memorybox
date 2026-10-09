@@ -97,6 +97,18 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-c
 .seg{display:flex;background:var(--line);border-radius:12px;padding:3px;margin-bottom:12px}
 .seg button{flex:1;border:0;background:none;padding:8px;border-radius:10px;font-weight:600;color:var(--muted);cursor:pointer}
 .seg button.on{background:#fff;color:var(--ink)}
+.dia{font-size:13px;font-weight:700;color:var(--muted);margin:16px 4px 8px}
+.mov{background:var(--card);border-radius:14px;padding:12px 14px;margin-bottom:8px}
+.mov .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.mov .quem{font-weight:700}
+.mov .hora{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.mov .o{margin-top:3px}
+.mov ul{margin:6px 0 0;padding-left:18px;font-size:13.5px;color:var(--muted)}
+.mov ul li{margin:2px 0}
+.tag{font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:20px;margin-right:6px;text-transform:uppercase;letter-spacing:.3px}
+.tag.criou{background:var(--ok-soft);color:var(--ok)}.tag.alterou{background:var(--warn-soft);color:var(--warn)}
+.tag.apagou{background:#f9dedb;color:var(--bad)}.tag.importou{background:var(--accent-soft);color:#a83a55}
+nav button{font-size:11px}
 </style>
 </head>
 <body>
@@ -162,6 +174,13 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-c
     <div class="card how">Novos rolos e outras despesas. Se pagarem a meias, coloca metade em cada uma (botão “A meias”).</div>
   </section>
 
+  <!-- HISTÓRICO -->
+  <section class="view" id="v-historico">
+    <h2>Histórico de movimentos</h2>
+    <div class="seg" id="histFiltro"></div>
+    <div id="listaHist"></div>
+  </section>
+
   <!-- CONFIGURAÇÃO -->
   <section class="view" id="v-config">
     <h2>Rolos</h2>
@@ -210,6 +229,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-c
   <button data-v="resumo" class="active"><svg viewBox="0 0 24 24"><path d="M3 12l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Resumo</button>
   <button data-v="servicos"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/></svg>Serviços</button>
   <button data-v="compras"><svg viewBox="0 0 24 24"><path d="M5 7h14l-1.5 12h-11z"/><path d="M9 7a3 3 0 016 0"/></svg>Compras</button>
+  <button data-v="historico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Histórico</button>
   <button data-v="config"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>Configuração</button>
 </nav>
 </div>
@@ -255,13 +275,16 @@ const DADOS_INICIAIS = {
     ]
   },
   servicos: [
-    { id: 's1', data: '2026-09-04', evento: 'Junta Casal Comba', recebido: 460, fotos: 750, roloId: 'r1', abater: 260, obs: '', criado: 1 }
+    { id: 's1', data: '2026-09-04', evento: 'Junta Casal Comba', recebido: 460, fotos: 750, roloId: 'r1', roloNome: 'Rolo 10x15', abater: 260, obs: '', criado: 1 }
   ],
   compras: []
 };
 
 // ── Estado ──
 let S = structuredClone(DADOS_INICIAIS);
+let historico = [];            // movimentos (mais recente primeiro)
+let eu = { email: '', nome: 'Este telemóvel' };
+let filtroHist = 'todos';
 let modo = 'local';           // 'local' ou 'nuvem'
 let fb = null;                // funções do Firebase quando ligado
 const LS_KEY = 'memorybox-v1';
@@ -355,6 +378,7 @@ function render() {
       <div class="chips"><span class="chip">${esc(P[0])} ${eur(c.p1)}</span><span class="chip">${esc(P[1])} ${eur(c.p2)}</span></div>
     </button>`).join('') : '<div class="empty">Sem compras registadas.<br>Carrega no + para adicionar.</div>';
 
+  renderHistorico();
   if (vista === 'config' && !cfgSujo) renderConfig();
 }
 
@@ -512,42 +536,116 @@ $('btnCsv').onclick = () => {
 };
 
 // ═══════════════════════════════════════════════════════════════
+//  HISTÓRICO DE MOVIMENTOS
+// ═══════════════════════════════════════════════════════════════
+const fmtV = (v, f) => (v === '' || v == null) ? '—' : (f ? f(v) : String(v));
+function camposDe(col) {
+  const P = S.config.pessoas;
+  return col === 'servicos'
+    ? [['data', 'Data', dataPT], ['evento', 'Evento'], ['recebido', 'Recebido', eur], ['fotos', 'Nº fotos'], ['roloId', 'Rolo', id => (S.config.rolos.find(r => r.id === id) || {}).nome || id], ['abater', 'Quero abater', eur], ['obs', 'Observação']]
+    : [['data', 'Data', dataPT], ['tipo', 'Tipo'], ['descricao', 'Descrição'], ['total', 'Valor total', eur], ['p1', P[0], eur], ['p2', P[1], eur], ['obs', 'Observação']];
+}
+function diferencas(col, antes, depois) {
+  const out = [];
+  for (const [k, nome, f] of camposDe(col)) {
+    const a = antes ? antes[k] : undefined, d = depois ? depois[k] : undefined;
+    if (antes && depois) { if (String(a ?? '') !== String(d ?? '')) out.push(`${nome}: ${fmtV(a, f)} → ${fmtV(d, f)}`); }
+    else { const v = antes || depois; if (v[k] !== '' && v[k] != null && v[k] !== 0) out.push(`${nome}: ${fmtV(v[k], f)}`); }
+  }
+  return out;
+}
+function diferencasConfig(a, d) {
+  const out = [];
+  a.pessoas.forEach((p, i) => { if (p !== d.pessoas[i]) out.push(`Nome: ${p} → ${d.pessoas[i]}`); });
+  if (a.investimentoPor !== d.investimentoPor) out.push(`Investimento pago por: ${a.pessoas[a.investimentoPor]} → ${d.pessoas[d.investimentoPor]}`);
+  const lista = (x, y, nomeTipo, campos) => {
+    for (const n of y) { const o = x.find(i => i.id === n.id);
+      if (!o) { out.push(`${nomeTipo} adicionado: ${n.nome || '—'} (${campos.map(([k, l, f]) => `${l} ${fmtV(n[k], f)}`).join(', ')})`); continue; }
+      for (const [k, l, f] of [['nome', 'nome'], ...campos]) if (String(o[k] ?? '') !== String(n[k] ?? '')) out.push(`${nomeTipo} ${o.nome || '—'} — ${l}: ${fmtV(o[k], f)} → ${fmtV(n[k], f)}`); }
+    for (const o of x) if (!y.find(i => i.id === o.id)) out.push(`${nomeTipo} removido: ${o.nome || '—'}`);
+  };
+  lista(a.rolos, d.rolos, 'Rolo', [['preco', 'preço', eur], ['fotos', 'fotos/rolo']]);
+  lista(a.investimento, d.investimento, 'Investimento', [['valor', 'valor', eur]]);
+  return out;
+}
+async function registar(acao, tipo, titulo, detalhes) {
+  if (acao === 'alterou' && !detalhes.length) return;
+  const m = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), quando: Date.now(),
+    email: eu.email, quem: eu.nome, acao, tipo, titulo: titulo || '', detalhes };
+  historico.unshift(m); renderHistorico();
+  if (modo === 'local') return gravarLocal();
+  try { await fb.setDoc(fb.doc(fb.db, 'memorybox', 'v1', 'historico', m.id), m); } catch (e) { erroNuvem(e); }
+}
+function renderHistorico() {
+  const P = S.config.pessoas;
+  const opcoes = [['todos', 'Todos'], ...EMAILS_PERMITIDOS.map((e, i) => [e.toLowerCase(), P[i] || e])];
+  $('histFiltro').innerHTML = opcoes.map(([v, l]) => `<button data-f="${esc(v)}" class="${filtroHist === v ? 'on' : ''}">${esc(l)}</button>`).join('');
+  const lista = historico.filter(m => filtroHist === 'todos' || (m.email || '').toLowerCase() === filtroHist);
+  if (!lista.length) { $('listaHist').innerHTML = '<div class="empty">Ainda não há movimentos registados.<br>A partir de agora, tudo o que for criado, alterado ou apagado aparece aqui.</div>'; return; }
+  const nomeDe = m => { const i = EMAILS_PERMITIDOS.map(e => e.toLowerCase()).indexOf((m.email || '').toLowerCase()); return i >= 0 ? (P[i] || m.quem) : (m.quem || m.email || '—'); };
+  let html = '', diaAtual = '';
+  for (const m of lista) {
+    const d = new Date(m.quando), dia = d.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    if (dia !== diaAtual) { html += `<div class="dia">${esc(dia)}</div>`; diaAtual = dia; }
+    html += `<div class="mov"><div class="top"><span><span class="tag ${esc(m.acao)}">${esc(m.acao)}</span><span class="quem">${esc(nomeDe(m))}</span></span>
+      <span class="hora">${d.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}</span></div>
+      <div class="o">${esc(m.tipo)}${m.titulo ? ' · <b>' + esc(m.titulo) + '</b>' : ''}</div>
+      ${m.detalhes && m.detalhes.length ? '<ul>' + m.detalhes.map(x => `<li>${esc(x)}</li>`).join('') + '</ul>' : ''}</div>`;
+  }
+  $('listaHist').innerHTML = html;
+}
+$('histFiltro').onclick = e => { const b = e.target.closest('[data-f]'); if (b) { filtroHist = b.dataset.f; renderHistorico(); } };
+
+// ═══════════════════════════════════════════════════════════════
 //  ARMAZENAMENTO: local (este telemóvel) ou nuvem (Firebase)
 // ═══════════════════════════════════════════════════════════════
-function gravarLocal() { try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch { toast('Não foi possível guardar neste telemóvel', 'erro'); } }
+function gravarLocal() { try { localStorage.setItem(LS_KEY, JSON.stringify({ ...S, historico: modo === 'local' ? historico : undefined })); } catch { toast('Não foi possível guardar neste telemóvel', 'erro'); } }
 function lerLocal() { try { const d = JSON.parse(localStorage.getItem(LS_KEY)); if (d && d.config) return d; } catch {} return null; }
 
-async function guardar(col, reg) {
-  const lista = S[col], i = lista.findIndex(x => x.id === reg.id);
+const TIPO = { servicos: 'Serviço', compras: 'Compra' };
+const tituloDe = (col, r) => col === 'servicos' ? r.evento : r.descricao;
+async function guardar(col, reg, silencioso) {
+  const lista = S[col], i = lista.findIndex(x => x.id === reg.id), antes = i >= 0 ? { ...lista[i] } : null;
   if (i >= 0) lista[i] = reg; else lista.push(reg);
   render();
+  if (!silencioso) registar(antes ? 'alterou' : 'criou', TIPO[col], tituloDe(col, reg), diferencas(col, antes, reg));
   if (modo === 'local') return gravarLocal();
   try { await fb.setDoc(fb.doc(fb.db, 'memorybox', 'v1', col, reg.id), reg); } catch (e) { erroNuvem(e); }
 }
-async function apagar(col, id) {
+async function apagar(col, id, silencioso) {
+  const antes = S[col].find(x => x.id === id);
   S[col] = S[col].filter(x => x.id !== id); render();
+  if (!silencioso && antes) registar('apagou', TIPO[col], tituloDe(col, antes), diferencas(col, antes, null));
   if (modo === 'local') return gravarLocal();
   try { await fb.deleteDoc(fb.doc(fb.db, 'memorybox', 'v1', col, id)); } catch (e) { erroNuvem(e); }
 }
-async function guardarConfig(c) {
+async function guardarConfig(c, silencioso) {
+  const antes = S.config;
   S.config = structuredClone(c); render();
+  if (!silencioso) registar('alterou', 'Configuração', '', diferencasConfig(antes, S.config));
   if (modo === 'local') return gravarLocal();
   try { await fb.setDoc(fb.doc(fb.db, 'memorybox', 'v1'), { config: S.config }, { merge: true }); } catch (e) { erroNuvem(e); }
 }
 async function substituirTudo(d) {
-  if (modo === 'local') { S = { config: d.config, servicos: d.servicos, compras: d.compras }; gravarLocal(); render(); return; }
-  for (const s of S.servicos) await fb.deleteDoc(fb.doc(fb.db, 'memorybox', 'v1', 'servicos', s.id));
-  for (const c of S.compras) await fb.deleteDoc(fb.doc(fb.db, 'memorybox', 'v1', 'compras', c.id));
-  await guardarConfig(d.config);
-  for (const s of d.servicos) await guardar('servicos', s);
-  for (const c of d.compras) await guardar('compras', c);
+  const resumo = [`${d.servicos.length} serviços e ${d.compras.length} compras importados`, `Substituiu ${S.servicos.length} serviços e ${S.compras.length} compras`];
+  if (modo === 'local') { S = { config: d.config, servicos: d.servicos, compras: d.compras }; render(); }
+  else {
+    for (const s of S.servicos) await apagar('servicos', s.id, true);
+    for (const c of S.compras) await apagar('compras', c.id, true);
+    await guardarConfig(d.config, true);
+    for (const s of d.servicos) await guardar('servicos', s, true);
+    for (const c of d.compras) await guardar('compras', c, true);
+  }
+  await registar('importou', 'Cópia de segurança', '', resumo);
 }
 function erroNuvem(e) { console.error(e); toast(e?.code === 'permission-denied' ? 'Sem permissão para gravar (ver regras do Firebase)' : 'Erro ao guardar na nuvem', 'erro'); }
 function estadoSync(on, txt) { $('syncDot').className = 'dot ' + (on ? 'on' : 'off'); $('syncTxt').textContent = txt; }
 
 async function iniciarLocal() {
   modo = 'local';
-  S = lerLocal() || structuredClone(DADOS_INICIAIS);
+  const L = lerLocal();
+  S = L ? { config: L.config, servicos: L.servicos, compras: L.compras } : structuredClone(DADOS_INICIAIS);
+  historico = (L && L.historico) || [];
   gravarLocal();
   estadoSync(false, 'neste telemóvel');
   $('modoTxt').textContent = 'Os dados estão guardados só neste telemóvel. Faz uma cópia de segurança de vez em quando.';
@@ -580,6 +678,7 @@ async function iniciarNuvem() {
     if (!user) { $('app').style.display = 'none'; $('ecraLogin').style.display = 'flex'; return; }
     $('ecraLogin').style.display = 'none'; $('app').style.display = 'block';
     $('modoTxt').textContent = `Dados partilhados na nuvem · sessão: ${user.email}`;
+    { const i = EMAILS_PERMITIDOS.map(e => e.toLowerCase()).indexOf(user.email.toLowerCase()); eu = { email: user.email.toLowerCase(), nome: S.config.pessoas[i] || user.displayName || user.email }; }
     estadoSync(navigator.onLine, navigator.onLine ? 'sincronizado' : 'sem rede');
     const raiz = F.doc(db, 'memorybox', 'v1');
     // Primeira vez: cria a configuração e o serviço da folha
@@ -590,11 +689,14 @@ async function iniciarNuvem() {
       await F.setDoc(raiz, { config: base.config });
       for (const s of base.servicos) await F.setDoc(F.doc(db, 'memorybox', 'v1', 'servicos', s.id), s);
       for (const c of base.compras || []) await F.setDoc(F.doc(db, 'memorybox', 'v1', 'compras', c.id), c);
+      for (const m of base.historico || []) await F.setDoc(F.doc(db, 'memorybox', 'v1', 'historico', m.id), { ...m, email: user.email.toLowerCase() });
       if (lerLocal()) toast('Dados deste telemóvel copiados para a nuvem');
     }
     desligar.push(F.onSnapshot(raiz, d => { if (d.exists() && d.data().config) { S.config = d.data().config; render(); } }, erroNuvem));
     for (const col of ['servicos', 'compras'])
       desligar.push(F.onSnapshot(F.collection(db, 'memorybox', 'v1', col), q => { S[col] = q.docs.map(d => d.data()); render(); }, erroNuvem));
+    desligar.push(F.onSnapshot(F.query(F.collection(db, 'memorybox', 'v1', 'historico'), F.orderBy('quando', 'desc'), F.limit(1000)),
+      q => { historico = q.docs.map(d => d.data()); renderHistorico(); }, erroNuvem));
   });
   addEventListener('online', () => estadoSync(true, 'sincronizado'));
   addEventListener('offline', () => estadoSync(false, 'sem rede'));

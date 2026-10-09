@@ -1,6 +1,6 @@
 rules_version = '2';
 // Copiar para: Firebase Console → Firestore Database → Regras → Publicar
-// Mete aqui os mesmos emails que estão em EMAILS_PERMITIDOS no index.html
+// Os emails têm de ser os mesmos que estão em EMAILS_PERMITIDOS no index.html
 service cloud.firestore {
   match /databases/{database}/documents {
     function autorizado() {
@@ -13,8 +13,18 @@ service cloud.firestore {
     }
     match /memorybox/v1 {
       allow read, write: if autorizado();
+
+      // Histórico: só se pode acrescentar, nunca alterar nem apagar,
+      // e cada registo tem de ficar com o email de quem o fez.
+      match /historico/{id} {
+        allow read: if autorizado();
+        allow create: if autorizado()
+          && request.resource.data.email == request.auth.token.email.lower();
+        allow update, delete: if false;
+      }
+
       match /{colecao}/{id} {
-        allow read, write: if autorizado();
+        allow read, write: if autorizado() && colecao != 'historico';
       }
     }
     match /{document=**} {
