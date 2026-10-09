@@ -11,6 +11,7 @@ Mesma lógica da folha `MemoryBox_FINAL_CORRIGIDO_LOGICA.xlsx`.
 - **Fica para dividir** = Recebido − Abate real, dividido 50% / 50%.
 - **Deslocações**: em cada serviço escreves a localidade e a app calcula os km desde Casal Comba (OpenStreetMap/OSRM, gratuito) e o custo do combustível (km × 2 × nº de deslocações × média do carro × preço do combustível). Esse custo entra no lucro do serviço.
 - **Simulador de orçamento** (separador Serviços): localidade, carro, nº de fotos e margem desejada → custo total e preço sugerido.
+- **Agenda**: calendário do mês com os eventos (pago / confirmado / orçamento). Os orçamentos ficam em “À espera de resposta” com os botões *✓ Marcou* (passa a Confirmado) e *✗ Não marcou* (passa a Cancelado). Cada evento pode ir para o calendário do telemóvel.
 - **Compras**: novos rolos e outras despesas, com quanto pagou cada uma (botão *A meias*).
 
 ## 1. Ativar o GitHub Pages
