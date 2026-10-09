@@ -190,6 +190,13 @@ nav button{font-size:12px;padding-left:0;padding-right:0}
 .fluxo{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:2px 2px 12px}
 .fluxo b{color:var(--ink)}
 .stat.link{cursor:pointer}
+.edit-line.pac{grid-template-columns:1fr 1fr 40px;align-items:end;margin-top:6px}
+.pac-lista .pc{padding:10px 0;border-bottom:1px solid var(--line)}.pac-lista .pc:last-child{border-bottom:0}
+.pac-lista .pc .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.pac-lista .pc b{font-size:15.5px}.pac-lista .pc .pr{font-weight:800;white-space:nowrap}
+.pac-lista .pc .inc{font-size:13px;color:var(--muted);margin-top:2px}
+details.pacotes{background:var(--card);border-radius:14px;padding:4px 14px;margin-bottom:12px}
+details.pacotes summary{font-weight:700;color:var(--ink);font-size:15px;padding:10px 0}
 #orcFiltro button{font-size:13.5px;padding:10px 4px;white-space:nowrap}
 @media (max-width:400px){#orcFiltro{display:grid;grid-template-columns:1fr 1fr;gap:3px}}
 .choque{background:#f9dedb;color:#8e2a1f;border-radius:10px;padding:8px 10px;font-size:13.5px;margin-top:8px}
@@ -266,6 +273,7 @@ nav button{font-size:12px;padding-left:0;padding-right:0}
   <!-- ORÇAMENTOS -->
   <section class="view" id="v-orcamentos">
     <button class="btn dark block" id="btnSim" style="margin-bottom:12px">🧮 Simulador de orçamento</button>
+    <div id="orcPacotes"></div>
     <div class="fluxo"><b>Pedido</b> → <b>Enviado</b> → <b>Aceite</b> (vai para a Agenda) ou <b>Recusado</b></div>
     <div class="seg" id="orcFiltro"></div>
     <div id="listaOrc"></div>
@@ -308,6 +316,14 @@ nav button{font-size:12px;padding-left:0;padding-right:0}
 
   <!-- CONFIGURAÇÃO -->
   <section class="view" id="v-config">
+    <h2>Pacotes</h2>
+    <div class="card">
+      <div id="cfgPacotes"></div>
+      <button class="btn sm" id="addPacote">+ Adicionar pacote</button>
+      <label>Preço por hora extra (€)</label><input id="cfgHoraExtra" inputmode="decimal" placeholder="opcional">
+      <div class="hint">Se um evento durar mais horas do que o pacote, a app soma as horas extra ao valor.</div>
+    </div>
+
     <h2>Rolos</h2>
     <div class="card">
       <div id="cfgRolos"></div>
@@ -452,7 +468,7 @@ function toast(msg, tipo) { const t = $('toast'); t.textContent = msg; t.classNa
 // Mapas gratuitos (os mesmos da LenhaPro): OpenStreetMap (Nominatim) para encontrar a localidade
 // e OSRM para os km de carro. O Google Maps abre-se para ver o caminho.
 const BASE_DEFAULT = 'Casal Comba, Mealhada';
-function normCfg(c) { c.base = c.base || BASE_DEFAULT; c.carros = c.carros || []; c.precoComb = num(c.precoComb); c.avisoFotos = c.avisoFotos == null ? 200 : num(c.avisoFotos); c.rolos.forEach(r => { if (r.iniciais == null) r.iniciais = 1; }); return c; }
+function normCfg(c) { c.pacotes = c.pacotes || []; c.horaExtra = num(c.horaExtra); c.base = c.base || BASE_DEFAULT; c.carros = c.carros || []; c.precoComb = num(c.precoComb); c.avisoFotos = c.avisoFotos == null ? 200 : num(c.avisoFotos); c.rolos.forEach(r => { if (r.iniciais == null) r.iniciais = 1; }); return c; }
 const comPais = t => /portugal/i.test(t) ? t : t + ', Portugal';
 const urlRota = dest => `https://www.google.com/maps/dir/?api=1&travelmode=driving&origin=${encodeURIComponent(comPais(S.config.base))}&destination=${encodeURIComponent(comPais(dest))}`;
 const geoCache = {};
@@ -691,6 +707,7 @@ function render() {
       <div class="m">${dataPT(s.data)}${s.hora ? ' ' + s.hora : ''} · ${num(s.fotos).toLocaleString('pt-PT')} fotos · ${esc(L.rolo ? L.rolo.nome : (s.roloNome || 'sem rolo'))}${s.localidade ? ` · 📍 ${esc(s.localidade)}${num(s.km) ? ' ' + fmtKm(s).split(' · ')[0] : ''}` : ''}</div>
       <div class="chips">
         <span class="chip ok">Lucro ${eur(L.lucro)} · ${pct(L.margem)}</span>
+        ${s.pacoteNome ? `<span class="chip">📦 ${esc(s.pacoteNome)}</span>` : ''}
         ${L.desl ? `<span class="chip">⛽ ${eur(L.desl)}</span>` : ''}
         ${L.abateReal ? `<span class="chip warn">Abate ${eur(L.abateReal)}</span>` : ''}
         ${L.conta ? `<span class="chip acc">${esc(P[0])} ${eur(L.p1)} · ${esc(P[1])} ${eur(L.p2)}</span>` : ''}
@@ -714,6 +731,22 @@ function render() {
   if (vista === 'config' && !cfgSujo) renderConfig();
 }
 
+// ── PACOTES ──
+const pacoteDe = id => (S.config.pacotes || []).find(p => p.id === id);
+const fmtH = h => (num(h) || 0).toLocaleString('pt-PT', { maximumFractionDigits: 1 }) + ' h';
+// valor de um pacote para um nº de horas (com horas extra, se houver preço por hora extra)
+function valorPacote(p, horas) {
+  const extra = Math.max(0, num(horas) - num(p.horas));
+  return { extra, valor: num(p.preco) + (extra && S.config.horaExtra ? extra * S.config.horaExtra : 0) };
+}
+const htmlPacotes = (id, sel) => `<select id="${id}"><option value="">— sem pacote —</option>${(S.config.pacotes || []).map(p => `<option value="${esc(p.id)}" ${p.id === sel ? 'selected' : ''}>${esc(p.nome)} · ${fmtH(p.horas)} · ${eur(p.preco)}</option>`).join('')}</select>`;
+function renderPacotesOrc() {
+  const ps = S.config.pacotes || [];
+  $('orcPacotes').innerHTML = ps.length ? `<details class="pacotes"><summary>📦 Os nossos pacotes (${ps.length})</summary><div class="pac-lista">${ps.map(p => `<div class="pc"><div class="top"><b>${esc(p.nome)}</b><span class="pr">${eur(p.preco)}</span></div>
+    <div class="inc">${fmtH(p.horas)}${p.inclui ? ' · ' + esc(p.inclui) : ''}</div></div>`).join('')}${S.config.horaExtra ? `<div class="pc"><div class="inc">Hora extra: <b>${eur(S.config.horaExtra)}</b></div></div>` : ''}</div></details>`
+    : `<div class="hint" style="margin:0 2px 12px">📦 Ainda não há pacotes — cria-os em Mais → Ajustes → Pacotes.</div>`;
+}
+
 // ── ORÇAMENTOS ──
 let orcFiltro = 'pedido';
 function cartaoOrc(s) {
@@ -727,7 +760,7 @@ function cartaoOrc(s) {
   return `<div class="ev">
     <div class="top"><span class="t">${esc(s.evento || 'Sem nome')}</span><span class="estado ${et.cls}">${f === 'aceite' ? 'Aceite' : et.txt}</span></div>
     <div class="m">${s.data ? '📅 ' + dataLonga(s.data) + (s.hora ? ' · ' + s.hora : '') : '📅 Sem data'}${s.localidade ? ' · 📍 ' + esc(s.localidade) : ''}</div>
-    <div class="m">${num(s.recebido) ? '💶 ' + eur(s.recebido) : '<span style="color:var(--warn)">Ainda sem valor</span>'}${num(s.fotos) ? ' · ' + fotosN(num(s.fotos)) + ' fotos' : ''}${s.pedidoEm ? ' · pedido ' + dataPT(s.pedidoEm) : ''}${s.enviadoEm ? ' · enviado ' + dataPT(s.enviadoEm) : ''}${s.respostaEm && (f === 'aceite' || f === 'recusado') ? ' · resposta ' + dataPT(s.respostaEm) : ''}</div>
+    <div class="m">${s.pacoteNome ? '📦 ' + esc(s.pacoteNome) + (num(s.duracao) ? ' (' + fmtH(s.duracao) + ')' : '') + ' · ' : ''}${num(s.recebido) ? '💶 ' + eur(s.recebido) : '<span style="color:var(--warn)">Ainda sem valor</span>'}${num(s.fotos) ? ' · ' + fotosN(num(s.fotos)) + ' fotos' : ''}${s.pedidoEm ? ' · pedido ' + dataPT(s.pedidoEm) : ''}${s.enviadoEm ? ' · enviado ' + dataPT(s.enviadoEm) : ''}${s.respostaEm && (f === 'aceite' || f === 'recusado') ? ' · resposta ' + dataPT(s.respostaEm) : ''}</div>
     ${f === 'enviado' && dEnv >= 3 ? `<div class="lembrete">⏰ Enviado há ${dEnv} dias — perguntar ao cliente?</div>` : ''}
     ${f === 'pedido' && diasDesde(s.pedidoEm) >= 2 ? `<div class="lembrete">⏰ Pedido há ${diasDesde(s.pedidoEm)} dias — falta enviar</div>` : ''}
     ${ocupado.length ? `<div class="choque">⚠️ Esse dia já está ocupado: ${ocupado.map(x => esc(x.evento || 'evento')).join(', ')}</div>` : ''}
@@ -735,6 +768,7 @@ function cartaoOrc(s) {
 }
 function renderOrcamentos() {
   if (!$('listaOrc')) return;
+  renderPacotesOrc();
   const grupos = { pedido: [], enviado: [], aceite: [], recusado: [] };
   for (const s of S.servicos) { const f = faseDe(s); if (f) grupos[f].push(s); }
   grupos.pedido.sort((a, b) => (a.pedidoEm || a.data || '').localeCompare(b.pedidoEm || b.data || ''));
@@ -884,6 +918,8 @@ function formServico(s) {
     <label>Evento / Cliente</label><input id="fEvento" value="${esc(s.evento)}" placeholder="Ex.: Casamento Ana & Rui">
     <label>Telefone do cliente</label><input id="fTel" type="tel" inputmode="tel" value="${esc(s.telefone)}" placeholder="Ex.: 912 345 678" autocomplete="off">
     <div id="fTelAcoes"></div>
+    <label>Pacote</label>${htmlPacotes('fPacote', s.pacoteId)}
+    <div class="hint" id="fPacoteHint"></div>
     <div class="two"><div><label>Valor do serviço (€)</label><input id="fRec" inputmode="decimal" value="${esc(fmtIn(s.recebido))}"></div>
     <div><label>Nº de fotos</label><input id="fFotos" inputmode="numeric" value="${esc(s.fotos)}"></div></div>
     <label>Rolo</label><select id="fRolo">${S.config.rolos.map(r => `<option value="${esc(r.id)}" ${r.id === s.roloId ? 'selected' : ''}>${esc(r.nome)}</option>`).join('')}</select>
@@ -939,6 +975,19 @@ function formServico(s) {
   $('fPagoTudo').onclick = () => { pagoTocado = true; $('fPago').value = $('fRec').value; prev(); };
   $('fPagoNada').onclick = () => { pagoTocado = true; $('fPago').value = '0'; prev(); };
   const espelhar = () => { if (!pagoTocado && estadoAtual === 'confirmado') $('fPago').value = ($('fData').value || hoje()) <= hoje() ? $('fRec').value : ''; };
+  // pacote: preenche o valor e as horas (e soma as horas extra)
+  const aplicarPacote = mudouPacote => {
+    const p = pacoteDe($('fPacote').value);
+    if (!p) { $('fPacoteHint').textContent = (S.config.pacotes || []).length ? '' : 'Cria os pacotes em Mais → Ajustes → Pacotes.'; return; }
+    if (mudouPacote || !num($('fDur').value)) $('fDur').value = fmtIn(num(p.horas));
+    const v = valorPacote(p, num($('fDur').value));
+    $('fRec').value = fmtIn(r2(v.valor)); espelhar();
+    $('fPacoteHint').textContent = `${p.nome}: ${fmtH(p.horas)} por ${eur(p.preco)}` + (v.extra ? (S.config.horaExtra ? ` + ${fmtH(v.extra)} extra × ${eur(S.config.horaExtra)}` : ` · ${fmtH(v.extra)} a mais (sem preço de hora extra definido)`) : '') + (p.inclui ? ` · ${p.inclui}` : '');
+  };
+  $('fPacote').onchange = () => { aplicarPacote(true); prev(); };
+  $('fDur').addEventListener('change', () => { if (pacoteDe($('fPacote').value)) { aplicarPacote(false); prev(); } });
+  if (pacoteDe(s.pacoteId)) { const p = pacoteDe(s.pacoteId); $('fPacoteHint').textContent = `${p.nome}: ${fmtH(p.horas)} por ${eur(p.preco)}${p.inclui ? ' · ' + p.inclui : ''}`; }
+  else if (!(S.config.pacotes || []).length) $('fPacoteHint').textContent = 'Cria os pacotes em Mais → Ajustes → Pacotes.';
   const kmValidos = ligarKm('f', kmEst, () => prev());
   ['fData', 'fRolo', 'fRec', 'fFotos', 'fAbater', 'fCarro', 'fDesl'].forEach(i => $(i).oninput = () => { espelhar(); prev(); });
   $('fPago').oninput = () => { pagoTocado = true; prev(); }; prev();
@@ -955,7 +1004,7 @@ function formServico(s) {
       reg.orcFase = estadoAtual === 'confirmado' ? 'aceite' : (veio === 'aceite' ? 'aceite' : 'recusado');
       if (estadoDe(s) === 'orcamento') reg.respostaEm = hoje(); }
     if (estadoAtual === 'confirmado' && !$('fData').value) return toast('Falta a data do evento', 'erro');
-    Object.assign(reg, { estado: estadoAtual, pago: num($('fPago').value), telefone: $('fTel').value.trim(), hora: $('fHora').value || '', duracao: num($('fDur').value) || '' });
+    Object.assign(reg, { estado: estadoAtual, pago: num($('fPago').value), telefone: $('fTel').value.trim(), hora: $('fHora').value || '', duracao: num($('fDur').value) || '', pacoteId: $('fPacote').value, pacoteNome: pacoteDe($('fPacote').value)?.nome || '' });
     if (reg.pago > reg.recebido && reg.recebido && !confirm('O valor já recebido é maior do que o valor do serviço. Guardar assim?')) return;
     if (reg.localidade && !km && !confirm('Ainda não calculaste os km desta localidade. Guardar sem custo de deslocação?')) return;
     if (!reg.recebido && !reg.fotos) return toast('Preenche o valor recebido ou o nº de fotos', 'erro');
@@ -967,9 +1016,12 @@ function formServico(s) {
 // ── SIMULADOR DE ORÇAMENTO ──
 let simUltimo = { local: '', km: 0 }, simVals = null;
 function simulador() {
-  const v = simVals || { carroId: S.config.carros.length === 1 ? S.config.carros[0].id : '', desl: 1, fotos: '', roloId: S.config.rolos[0]?.id || '', margem: 60, outros: '', preco: '' };
+  const v = simVals || { carroId: S.config.carros.length === 1 ? S.config.carros[0].id : '', desl: 1, fotos: '', roloId: S.config.rolos[0]?.id || '', margem: 60, outros: '', preco: '', pacoteId: '', horas: '' };
   abrirFolha(`<h3>Simulador de orçamento</h3>
-    <label style="margin-top:0">Localidade do serviço</label>${htmlKm('s', simUltimo.local)}
+    <div class="two"><div><label style="margin-top:0">Pacote</label>${htmlPacotes('sPacote', v.pacoteId)}</div>
+    <div><label style="margin-top:0">Horas</label><input id="sHoras" inputmode="decimal" value="${esc(v.horas)}" placeholder="do pacote"></div></div>
+    <div class="hint" id="sPacoteHint"></div>
+    <label>Localidade do serviço</label>${htmlKm('s', simUltimo.local)}
     <div class="two"><div><label>Carro</label>${htmlCarros('sCarro', v.carroId)}</div>
     <div><label>Nº de deslocações</label><input id="sDesl" inputmode="numeric" value="${esc(v.desl)}"></div></div>
     <div class="two"><div><label>Combustível (€/L)</label><input id="sComb" inputmode="decimal" value="${S.config.precoComb ? String(S.config.precoComb).replace('.', ',') : ''}" placeholder="1,65"></div>
@@ -987,7 +1039,7 @@ function simulador() {
   consDoCarro();
   const kmValidos = ligarKm('s', simUltimo, () => calc());
   const calc = () => {
-    simVals = { carroId: $('sCarro').value, desl: $('sDesl').value, fotos: $('sFotos').value, roloId: $('sRolo').value, margem: $('sMargem').value, outros: $('sOutros').value, preco: $('sPreco').value };
+    simVals = { carroId: $('sCarro').value, desl: $('sDesl').value, fotos: $('sFotos').value, roloId: $('sRolo').value, margem: $('sMargem').value, outros: $('sOutros').value, preco: $('sPreco').value, pacoteId: $('sPacote').value, horas: $('sHoras').value };
     const km = kmValidos(), n = Math.max(1, Math.round(num($('sDesl').value)) || 1), kmTotal = km * 2 * n;
     const litros = kmTotal * num($('sCons').value) / 100, comb = litros * num($('sComb').value);
     const rolo = S.config.rolos.find(r => r.id === $('sRolo').value), fotos = num($('sFotos').value), cFotos = fotos * custoFoto(rolo);
@@ -1004,19 +1056,31 @@ function simulador() {
     $('sSug').innerHTML = total ? `<div class="big-res"><div class="lbl">Preço sugerido para ${Math.round(m * 100)}% de margem</div><div class="val">${eur(arred(sug))}</div>
       <div class="lbl">Lucro ≈ ${eur(arred(sug) - total)} (arredondado aos 5 €)</div></div>
       <div class="sugest">${[50, 70, 80].map(p => `<div>${p}% margem<b>${eur(arred(total / (1 - p / 100)))}</b></div>`).join('')}</div>` : '';
+    // lucro de cada pacote com estes custos
+    const ps = S.config.pacotes || [];
+    if (ps.length && total) $('sSug').innerHTML += `<div class="preview"><div class="row"><span class="k"><b>Com estes custos</b></span><span class="v"></span></div>${ps.map(p => { const vv = valorPacote(p, num($('sHoras').value) || num(p.horas)).valor, lu = vv - total;
+      return `<div class="row"><span class="k">📦 ${esc(p.nome)} (${eur(vv)})</span><span class="v" style="color:${lu >= 0 ? 'var(--ok)' : 'var(--bad)'}">${eur(lu)} · ${pct(vv ? lu / vv : 0)}</span></div>`; }).join('')}</div>`;
     const preco = num($('sPreco').value);
     $('sLucro').style.display = preco ? 'block' : 'none';
     if (preco) $('sLucro').innerHTML = `<div class="row"><span class="k">Lucro com ${eur(preco)}</span><span class="v" style="color:${preco - total >= 0 ? 'var(--ok)' : 'var(--bad)'}">${eur(preco - total)}</span></div>
       <div class="row"><span class="k">Margem</span><span class="v">${pct((preco - total) / preco)}</span></div>`;
-    return { km, n, fotos, preco: preco || arred(sug) };
+    return { km, n, fotos, preco: preco || arred(sug), horas: num($('sHoras').value) };
   };
   $('sCarro').onchange = () => { consDoCarro(); calc(); };
+  const pacoteSim = mudou => { const p = pacoteDe($('sPacote').value);
+    if (!p) { $('sPacoteHint').textContent = (S.config.pacotes || []).length ? '' : 'Cria os pacotes em Mais → Ajustes → Pacotes.'; return; }
+    if (mudou || !num($('sHoras').value)) $('sHoras').value = fmtIn(num(p.horas));
+    const vv = valorPacote(p, num($('sHoras').value)); $('sPreco').value = fmtIn(r2(vv.valor));
+    $('sPacoteHint').textContent = `Preço do pacote: ${eur(p.preco)}` + (vv.extra && S.config.horaExtra ? ` + ${fmtH(vv.extra)} extra = ${eur(vv.valor)}` : '') + (p.inclui ? ` · ${p.inclui}` : ''); };
+  $('sPacote').onchange = () => { pacoteSim(true); calc(); };
+  $('sHoras').oninput = () => { if (pacoteDe($('sPacote').value)) pacoteSim(false); calc(); };
+  pacoteSim(false);
   ['sDesl', 'sComb', 'sCons', 'sFotos', 'sRolo', 'sOutros', 'sMargem', 'sPreco'].forEach(i => $(i).oninput = calc);
   calc();
   $('sCriar').onclick = () => {
     const r = calc(); fecharFolha();
     setTimeout(() => formServico({ localidade: $('sLocal')?.value || simUltimo.local, km: r.km, kmMin: simUltimo.min, kmAprox: simUltimo.aprox, kmNome: simUltimo.nome,
-      carroId: $('sCarro')?.value || simVals.carroId, deslocacoes: r.n, fotos: r.fotos || '', roloId: simVals.roloId, recebido: r.preco ? r2(r.preco) : '', estado: 'orcamento', orcFase: 'pedido', pedidoEm: hoje(), data: '', pago: 0 }), 250);
+      carroId: $('sCarro')?.value || simVals.carroId, deslocacoes: r.n, pacoteId: simVals.pacoteId, pacoteNome: pacoteDe(simVals.pacoteId)?.nome || '', duracao: r.horas || '', fotos: r.fotos || '', roloId: simVals.roloId, recebido: r.preco ? r2(r.preco) : '', estado: 'orcamento', orcFase: 'pedido', pedidoEm: hoje(), data: '', pago: 0 }), 250);
   };
 }
 $('btnSim').onclick = simulador;
@@ -1067,6 +1131,13 @@ function renderConfig() {
 }
 function desenharCfg() {
   const c = cfgRascunho;
+  $('cfgPacotes').innerHTML = c.pacotes.length ? c.pacotes.map((p, i) => `<div class="rolo-bloco">
+    <input data-p="${i}" data-f="nome" value="${esc(p.nome)}" placeholder="Nome do pacote (ex.: Básico)">
+    <div class="edit-line pac"><label class="mini">Horas<input data-p="${i}" data-f="horas" inputmode="decimal" value="${esc(fmtIn(p.horas))}"></label>
+    <label class="mini">Preço (€)<input data-p="${i}" data-f="preco" inputmode="decimal" value="${esc(fmtIn(p.preco))}"></label><button class="x" data-pdel="${i}" aria-label="Remover pacote">×</button></div>
+    <label class="mini" style="margin-top:6px">O que inclui (opcional)<input data-p="${i}" data-f="inclui" value="${esc(p.inclui || '')}" placeholder="ex.: impressões ilimitadas, adereços"></label></div>`).join('')
+    : '<div class="hint" style="margin:0 0 10px">Ainda não há pacotes.</div>';
+  $('cfgHoraExtra').value = c.horaExtra ? fmtIn(c.horaExtra) : '';
   $('cfgRolos').innerHTML = c.rolos.map((r, i) => `<div class="rolo-bloco">
     <input data-r="${i}" data-f="nome" value="${esc(r.nome)}" placeholder="Nome do rolo">
     <div class="edit-line rolo"><label class="mini">Preço (€)<input data-r="${i}" data-f="preco" inputmode="decimal" value="${esc(fmtIn(r.preco))}"></label>
@@ -1094,6 +1165,11 @@ $('cfgRolos').onclick = e => { const i = e.target.dataset.rdel; if (i == null) r
 $('cfgInv').onclick = e => { const i = e.target.dataset.idel; if (i == null) return; cfgRascunho.investimento.splice(i, 1); cfgSujo = true; desenharCfg(); };
 $('addRolo').onclick = () => { cfgRascunho.rolos.push({ id: uid(), nome: 'Novo rolo', preco: 0, fotos: 1400, iniciais: 0 }); cfgSujo = true; desenharCfg(); };
 $('addInv').onclick = () => { cfgRascunho.investimento.push({ id: uid(), nome: '', valor: 0 }); cfgSujo = true; desenharCfg(); };
+$('cfgPacotes').oninput = e => { const el = e.target; if (el.dataset.p == null) return; cfgSujo = true; cfgRascunho.pacotes[el.dataset.p][el.dataset.f] = ['nome', 'inclui'].includes(el.dataset.f) ? el.value : num(el.value); };
+$('cfgPacotes').onclick = e => { const i = e.target.dataset.pdel; if (i == null) return; cfgRascunho.pacotes.splice(i, 1); cfgSujo = true; desenharCfg(); };
+$('addPacote').onclick = () => { cfgRascunho.pacotes.push({ id: uid(), nome: '', horas: 0, preco: 0, inclui: '' }); cfgSujo = true; desenharCfg();
+  const ins = $('cfgPacotes').querySelectorAll('input[data-f=nome]'); ins[ins.length - 1]?.focus(); };
+$('cfgHoraExtra').oninput = e => { cfgRascunho.horaExtra = num(e.target.value); cfgSujo = true; };
 $('cfgAviso').oninput = e => { cfgRascunho.avisoFotos = Math.round(num(e.target.value)); cfgSujo = true; };
 $('cfgBase').oninput = e => { cfgRascunho.base = e.target.value; cfgSujo = true; };
 $('cfgComb').oninput = e => { cfgRascunho.precoComb = num(e.target.value); cfgSujo = true; };
@@ -1107,6 +1183,7 @@ $('guardarCfg').onclick = async () => {
   const c = cfgRascunho;
   c.pessoas = c.pessoas.map((p, i) => (p || '').trim() || ['Pessoa 1', 'Pessoa 2'][i]);
   c.rolos = c.rolos.filter(r => (r.nome || '').trim());
+  c.pacotes = c.pacotes.filter(p => (p.nome || '').trim()).map(p => ({ ...p, nome: p.nome.trim(), inclui: (p.inclui || '').trim() }));
   c.carros = c.carros.filter(v => (v.nome || '').trim()); c.base = (c.base || '').trim() || BASE_DEFAULT;
   if (!c.rolos.length) return toast('Precisas de pelo menos um rolo', 'erro');
   await guardarConfig(c); cfgSujo = false; renderConfig(); toast('Configuração guardada');
@@ -1127,9 +1204,9 @@ $('fileImport').onchange = async e => {
 };
 $('btnCsv').onclick = () => {
   const C = calcular(), P = S.config.pessoas, f = n => (Number(n) || 0).toFixed(2).replace('.', ',');
-  const cab = ['Estado', 'Data', 'Evento / Cliente', 'Telefone', 'Recebido (€)', 'Já recebido (€)', 'Falta receber (€)', 'Nº fotos', 'Rolo', 'Custo/foto (€)', 'Custo fotos (€)', 'Localidade', 'Km (ida)', 'Carro', 'Deslocações', 'Custo deslocação (€)', 'Lucro do serviço (€)', 'Margem', 'Quero abater (€)', 'Abate real (€)', 'Fica para dividir (€)', P[0] + ' (€)', P[1] + ' (€)'];
-  const linhas = C.ordem.map(s => { const L = C.linhas[s.id]; return [etiqueta(s).txt, dataPT(s.data), s.evento, s.telefone || '', f(s.recebido), f(estadoDe(s) === 'confirmado' ? pagoDe(s) : 0), f(L.receber), s.fotos, L.rolo?.nome || s.roloNome || '', (L.cf).toFixed(4).replace('.', ','), f(L.custo), s.localidade || '', s.km ? String(s.km).replace('.', ',') : '', s.carroNome || '', s.km ? (s.deslocacoes || 1) : '', f(L.desl), f(L.lucro), pct(L.margem), f(s.abater), f(L.abateReal), f(L.dividir), f(L.p1), f(L.p2)]; });
-  linhas.push(['TOTAIS (só confirmados)', '', '', '', f(C.T.recebido), '', f(C.T.receber), C.T.fotos, '', '', f(C.T.custo), '', '', '', '', f(C.T.desl), f(C.T.lucro), pct(C.T.margem), '', f(C.T.abate), f(C.T.dividir), f(C.T.p1), f(C.T.p2)]);
+  const cab = ['Estado', 'Data', 'Evento / Cliente', 'Pacote', 'Telefone', 'Recebido (€)', 'Já recebido (€)', 'Falta receber (€)', 'Nº fotos', 'Rolo', 'Custo/foto (€)', 'Custo fotos (€)', 'Localidade', 'Km (ida)', 'Carro', 'Deslocações', 'Custo deslocação (€)', 'Lucro do serviço (€)', 'Margem', 'Quero abater (€)', 'Abate real (€)', 'Fica para dividir (€)', P[0] + ' (€)', P[1] + ' (€)'];
+  const linhas = C.ordem.map(s => { const L = C.linhas[s.id]; return [etiqueta(s).txt, dataPT(s.data), s.evento, s.pacoteNome || '', s.telefone || '', f(s.recebido), f(estadoDe(s) === 'confirmado' ? pagoDe(s) : 0), f(L.receber), s.fotos, L.rolo?.nome || s.roloNome || '', (L.cf).toFixed(4).replace('.', ','), f(L.custo), s.localidade || '', s.km ? String(s.km).replace('.', ',') : '', s.carroNome || '', s.km ? (s.deslocacoes || 1) : '', f(L.desl), f(L.lucro), pct(L.margem), f(s.abater), f(L.abateReal), f(L.dividir), f(L.p1), f(L.p2)]; });
+  linhas.push(['TOTAIS (só confirmados)', '', '', '', '', f(C.T.recebido), '', f(C.T.receber), C.T.fotos, '', '', f(C.T.custo), '', '', '', '', f(C.T.desl), f(C.T.lucro), pct(C.T.margem), '', f(C.T.abate), f(C.T.dividir), f(C.T.p1), f(C.T.p2)]);
   const csv = '﻿' + [cab, ...linhas].map(l => l.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(';')).join('\r\n');
   descarregar(`memorybox-servicos-${hoje()}.csv`, csv, 'text/csv;charset=utf-8');
 };
@@ -1141,7 +1218,7 @@ const fmtV = (v, f) => (v === '' || v == null) ? '—' : (f ? f(v) : String(v));
 function camposDe(col) {
   const P = S.config.pessoas;
   return col === 'servicos'
-    ? [['estado', 'Estado', v => ESTADOS[v] || v], ['orcFase', 'Orçamento', v => FASES[v] || v], ['data', 'Data', dataPT], ['hora', 'Hora'], ['duracao', 'Duração (h)'], ['evento', 'Evento'], ['telefone', 'Telefone'], ['pago', 'Já recebido', eur], ['recebido', 'Recebido', eur], ['fotos', 'Nº fotos'], ['roloId', 'Rolo', id => (S.config.rolos.find(r => r.id === id) || {}).nome || id], ['localidade', 'Localidade'], ['km', 'Km (ida)', v => String(v).replace('.', ',') + ' km'], ['carroNome', 'Carro'], ['deslocacoes', 'Deslocações'], ['custoDesloc', 'Custo deslocação', eur], ['abater', 'Quero abater', eur], ['obs', 'Observação']]
+    ? [['estado', 'Estado', v => ESTADOS[v] || v], ['orcFase', 'Orçamento', v => FASES[v] || v], ['pacoteNome', 'Pacote'], ['data', 'Data', dataPT], ['hora', 'Hora'], ['duracao', 'Duração (h)'], ['evento', 'Evento'], ['telefone', 'Telefone'], ['pago', 'Já recebido', eur], ['recebido', 'Recebido', eur], ['fotos', 'Nº fotos'], ['roloId', 'Rolo', id => (S.config.rolos.find(r => r.id === id) || {}).nome || id], ['localidade', 'Localidade'], ['km', 'Km (ida)', v => String(v).replace('.', ',') + ' km'], ['carroNome', 'Carro'], ['deslocacoes', 'Deslocações'], ['custoDesloc', 'Custo deslocação', eur], ['abater', 'Quero abater', eur], ['obs', 'Observação']]
     : [['data', 'Data', dataPT], ['tipo', 'Tipo'], ['descricao', 'Descrição'], ['total', 'Valor total', eur], ['quantidade', 'Nº de rolos'], ['p1', P[0], eur], ['p2', P[1], eur], ['obs', 'Observação']];
 }
 function diferencas(col, antes, depois) {
@@ -1169,6 +1246,8 @@ function diferencasConfig(a, d) {
   normCfg(a); normCfg(d);
   if (a.base !== d.base) out.push(`Ponto de partida: ${a.base} → ${d.base}`);
   if (num(a.precoComb) !== num(d.precoComb)) out.push(`Preço do combustível: ${a.precoComb ? eur(a.precoComb) : '—'} → ${d.precoComb ? eur(d.precoComb) : '—'} /L`);
+  lista(a.pacotes || [], d.pacotes || [], 'Pacote', [['horas', 'horas', fmtH], ['preco', 'preço', eur], ['inclui', 'inclui']]);
+  if (num(a.horaExtra) !== num(d.horaExtra)) out.push(`Hora extra: ${a.horaExtra ? eur(a.horaExtra) : '—'} → ${d.horaExtra ? eur(d.horaExtra) : '—'}`);
   lista(a.carros, d.carros, 'Carro', [['consumo', 'média', v => v ? String(v).replace('.', ',') + ' L/100km' : '—']]);
   return out;
 }
